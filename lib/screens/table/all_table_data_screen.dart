@@ -1,7 +1,5 @@
 import 'package:duplicate_building_solution/excel_file_exporter.dart';
-import 'package:duplicate_building_solution/screens/table/component/table_list_widget.dart';
-import 'package:duplicate_building_solution/screens/table/component/table_heading_widget.dart';
-import 'package:duplicate_building_solution/screens/table/table_data_screen.dart';
+
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
 import 'package:duplicate_building_solution/utils/globals.dart';
@@ -45,14 +43,14 @@ class AllTableDataScreenState extends State<AllTableDataScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        pageTransition(
-          context,
-          TableDataScreen(
-            fileName: widget.fileName,
-            partyName: widget.partyName,
-            projectName: widget.projectName,
-          ),
-        );
+        // pageTransition(
+        //   context,
+        //   TableDataScreen(
+        //     fileName: widget.fileName,
+        //     partyName: widget.partyName,
+        //     projectName: widget.projectName,
+        //   ),
+        // );
       },
 
       child: Scaffold(
@@ -60,14 +58,14 @@ class AllTableDataScreenState extends State<AllTableDataScreen> {
           color: ColorConstant.greenColor,
           context: context,
           backPress: () {
-            pageTransition(
-              context,
-              TableDataScreen(
-                fileName: widget.fileName,
-                partyName: widget.partyName,
-                projectName: widget.projectName,
-              ),
-            );
+            // pageTransition(
+            //   context,
+            //   TableDataScreen(
+            //     fileName: widget.fileName,
+            //     partyName: widget.partyName,
+            //     projectName: widget.projectName,
+            //   ),
+            // );
           },
           title: widget.fileName,
           action: [
@@ -92,15 +90,14 @@ class AllTableDataScreenState extends State<AllTableDataScreen> {
           ],
         ),
         body: StreamBuilder(
-          stream: FirebaseFirestore.instance
-              .collection(Globals.partyCollection)
+          stream: FirebaseRef.partyUserDoc
               .doc(widget.partyName)
-              .collection(Globals.projectCollection)
+              .collection('Globals.projectCollection')
               .doc(widget.projectName)
-              .collection(Globals.fileCollection)
+              .collection('Globals.fileCollection')
               .doc(widget.fileName)
-              .collection(Globals.recordsCollection)
-              .orderBy(Globals.idColumn, descending: true)
+              .collection('Globals.recordsCollection')
+              .orderBy("Globals.idColumn", descending: true)
               .snapshots(),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
@@ -113,7 +110,7 @@ class AllTableDataScreenState extends State<AllTableDataScreen> {
               excelData = tableData ?? [];
               Globals.tableId = (tableData ?? []).isEmpty
                   ? 0
-                  : tableData?.first[Globals.idColumn];
+                  : tableData?.first['Globals.idColumn'];
 
               return SingleChildScrollView(
                 child: Padding(
@@ -124,14 +121,14 @@ class AllTableDataScreenState extends State<AllTableDataScreen> {
                     child: Column(
                       children: [
                         HeightConstant.sizedBoxHeight20(),
-                        TableHeadingWidget(tableData: tableData ?? []),
-                        TableListWidget(
-                          isScreen: isScreen,
-                          fileName: widget.fileName,
-                          projectName: widget.projectName,
-                          partyName: widget.partyName,
-                          tableData: tableData,
-                        ),
+                        // TableHeadingWidget(tableData: tableData ?? []),
+                        // TableListWidget(
+                        //   isScreen: isScreen,
+                        //   fileName: widget.fileName,
+                        //   projectName: widget.projectName,
+                        //   partyName: widget.partyName,
+                        //   tableData: tableData,
+                        // ),
                         HeightConstant.sizedBoxHeight15(),
                       ],
                     ),
