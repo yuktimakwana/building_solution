@@ -65,9 +65,15 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
 
   void _onRowSelected(RecordsRowSelected e, Emitter<RecordsState> emit) {
     if (e.index < 0 || e.index >= state.records.length) return;
+    final selectedRecord = state.records[e.index];
+    print(
+      'Row selected: ${selectedRecord.docId}, line: ${selectedRecord.idColumn}',
+    );
+
     emit(
       state.copyWith(
         selectedIndex: e.index,
+        selected: selectedRecord, // 👈 save the actual selected record
         buttonsEnabled: true,
         mode: FormMode.add,
       ),
@@ -77,6 +83,9 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   void _onEdit(RecordsEditPressed e, Emitter<RecordsState> emit) {
     final sel = state.selected;
     if (sel == null) return;
+
+    print('Edit selected: $sel');
+
     // Prefill fields, lock in existing line number
     _recompute(
       emit,
@@ -133,6 +142,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   Future<void> _onNext(RecordsNextPressed e, Emitter<RecordsState> emit) async {
     emit(state.copyWith(loading: true, error: null));
     try {
+
       // Parse values safely
       num feet =
           num.tryParse(state.feet.trim().isEmpty ? '0' : state.feet.trim()) ??
@@ -159,12 +169,9 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
       );
 
       if (state.mode == FormMode.edit && state.selected != null) {
-        //  Update existing record (same docId and line number)
         final sel = state.selected!;
         await repo.updateRecord(sel.docId, record);
       } else {
-        // Add new record (normal add flow)
-        // Ensure no duplicate line number
         num ln = state.lineNumber;
         while (state.records.any((r) => r.idColumn == ln)) {
           ln = num.parse((ln + 0.1).toStringAsFixed(3));
@@ -195,7 +202,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         // disable Edit & Add Row after submit
         selectedIndex: null,
         clearSelection: true, // 👈 important
-
       );
     } catch (err) {
       emit(state.copyWith(loading: false, error: err.toString()));

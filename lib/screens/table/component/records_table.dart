@@ -2,7 +2,8 @@ import 'package:duplicate_building_solution/model/record_model.dart';
 import 'package:flutter/material.dart';
 
 class RecordsTable extends StatelessWidget {
-  const RecordsTable({super.key,
+  const RecordsTable({
+    super.key,
     required this.records,
     required this.selectedIndex,
     required this.onTapRow,
@@ -35,16 +36,27 @@ class RecordsTable extends StatelessWidget {
         TableRow(
           decoration: const BoxDecoration(color: Color(0xFFF2F2F2)),
           children: headers
-              .map((h) => Padding(
-            padding: const EdgeInsets.all(8),
-            child: Text(h, style: const TextStyle(fontWeight: FontWeight.bold)),
-          ))
+              .map(
+                (h) => Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 6,
+                  ),
+                  child: Text(
+                    h,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              )
               .toList(),
         ),
         ...List.generate(records.length, (i) {
           final r = records[i];
           final selected = selectedIndex == i;
-          final bg = selected ? const Color(0xFFE6F4EA) : Colors.white; // soft green highlight
+          final bg = selected
+              ? const Color(0xFFE6F4EA)
+              : Colors.white; // soft green highlight
           return TableRow(
             decoration: BoxDecoration(color: bg),
             children: [
@@ -63,7 +75,10 @@ class RecordsTable extends StatelessWidget {
   }
 
   Widget _cell(String s) => InkWell(
-    child: Padding(padding: const EdgeInsets.all(8), child: Text(s)),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+      child: Text(s,textAlign: TextAlign.center),
+    ),
   );
 }
 
@@ -71,12 +86,7 @@ extension on TableRow {
   TableRow withTap(VoidCallback onTap) {
     return TableRow(
       decoration: decoration,
-      children: children
-          .map((c) => InkWell(
-        onTap: onTap,
-        child: c,
-      ))
-          .toList(),
+      children: children.map((c) => InkWell(onTap: onTap, child: c)).toList(),
     );
   }
 }

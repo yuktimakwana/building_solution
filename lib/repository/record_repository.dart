@@ -23,7 +23,7 @@ class RecordsRepository {
       .collection(TextConstant.recordsCollection);
 
   Stream<List<RecordModel>> watchAll() => _col
-      .orderBy('id_column')
+      .orderBy('id_column',descending: true).limit(10)
       .snapshots()
       .map((snap) => snap.docs.map((d) => RecordModel.fromDoc(d)).toList());
 

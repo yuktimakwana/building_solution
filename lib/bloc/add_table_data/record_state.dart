@@ -15,12 +15,31 @@ class RecordsState {
    final num lineNumber; // shows in grey bar
    final bool loading;
    final String? error;
+   final RecordModel? selected;
+
 
    bool get hasData => records.isNotEmpty;
-   RecordModel? get selected =>
-       (selectedIndex != null && selectedIndex! >= 0 && selectedIndex! < records.length)
-           ? records[selectedIndex!]
-           : null;
+   @override
+   List<Object?> get props => [
+      records,
+      selectedIndex,
+      selected,
+      buttonsEnabled,
+      loading,
+      error,
+      mode,
+      note,
+      feet,
+      inch,
+      qty,
+      less,
+      lineNumber,
+      total,
+   ];
+   // RecordModel? get selected =>
+   //     (selectedIndex != null && selectedIndex! >= 0 && selectedIndex! < records.length)
+   //         ? records[selectedIndex!]
+   //         : null;
 
    const RecordsState({
       required this.records,
@@ -36,6 +55,7 @@ class RecordsState {
       this.lineNumber = 1,
       this.loading = false,
       this.error,
+      this.selected
    });
 
    RecordsState copyWith({
@@ -44,6 +64,7 @@ class RecordsState {
       bool? buttonsEnabled,
       FormMode? mode,
       String? note,
+      RecordModel? selected,
       String? feet,
       String? inch,
       String? qty,
@@ -66,6 +87,7 @@ class RecordsState {
          total: total ?? this.total,
          lineNumber: lineNumber ?? this.lineNumber,
          loading: loading ?? this.loading,
+         selected: selected ?? this.selected,
          error: error,
       );
    }

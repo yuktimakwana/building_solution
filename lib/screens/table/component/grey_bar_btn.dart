@@ -1,3 +1,4 @@
+import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:flutter/material.dart';
 
 class GreyBarBtn extends StatelessWidget {
@@ -20,7 +21,7 @@ class GreyBarBtn extends StatelessWidget {
         backgroundColor: enabled ? green : Colors.grey.shade400,
         foregroundColor: Colors.white,
         disabledBackgroundColor: Colors.grey.shade400,
-        disabledForegroundColor: Colors.white,
+        disabledForegroundColor: ColorConstant.naturalWhiteColor,
         elevation: enabled ? 2 : 0,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

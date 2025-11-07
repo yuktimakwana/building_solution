@@ -28,6 +28,39 @@ class _TableDataScreenState extends State<TableDataScreen> {
   final _feetCtrl = TextEditingController();
   final _inchCtrl = TextEditingController();
   final _qtyCtrl = TextEditingController();
+  final _noteFocus = FocusNode();
+  final _feetFocus = FocusNode();
+  final _inchFocus = FocusNode();
+  final _qtyFocus = FocusNode();
+  final _scrollController = ScrollController();
+  final _nextButtonKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+
+    _qtyFocus.addListener(() {
+      if (_qtyFocus.hasFocus) {
+        // Wait for keyboard + layout rebuild
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          await Future.delayed(const Duration(milliseconds: 300));
+
+          if (!mounted) return;
+
+          final ctx = _nextButtonKey.currentContext;
+          if (ctx != null) {
+            Scrollable.ensureVisible(
+              ctx,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOut,
+              alignment: 0.9, // 0.9 keeps NEXT button visible above keyboard
+            );
+          }
+        });
+      }
+    });
+  }
+
 
   @override
   void dispose() {
@@ -35,6 +68,12 @@ class _TableDataScreenState extends State<TableDataScreen> {
     _feetCtrl.dispose();
     _inchCtrl.dispose();
     _qtyCtrl.dispose();
+    _noteFocus.dispose();
+    _feetFocus.dispose();
+    _inchFocus.dispose();
+    _qtyFocus.dispose();
+    _scrollController.dispose();
+
     super.dispose();
   }
 
@@ -42,14 +81,15 @@ class _TableDataScreenState extends State<TableDataScreen> {
   Widget build(BuildContext context) {
     final bloc = context.read<RecordsBloc>();
     return BlocConsumer<RecordsBloc, RecordsState>(
-      listenWhen: (p, c) =>
-          p.note != c.note ||
-          p.feet != c.feet ||
-          p.inch != c.inch ||
-          p.qty != c.qty ||
-          p.less != c.less ||
-          p.mode != c.mode ||
-          p.lineNumber != c.lineNumber,
+      listenWhen: (p, c) {
+        return p.note != c.note ||
+            p.feet != c.feet ||
+            p.inch != c.inch ||
+            p.qty != c.qty ||
+            p.less != c.less ||
+            p.mode != c.mode ||
+            p.lineNumber != c.lineNumber;
+      },
       listener: (_, s) {
         // Keep controllers in sync with BLoC state
         if (_noteCtrl.text != s.note) _noteCtrl.text = s.note;
@@ -74,6 +114,7 @@ class _TableDataScreenState extends State<TableDataScreen> {
 
         return Scaffold(
           backgroundColor: Colors.white,
+          resizeToAvoidBottomInset: true, // 👈 ensure this is true
           appBar: AppBar(
             backgroundColor: green,
             leading: IconButton(
@@ -117,6 +158,7 @@ class _TableDataScreenState extends State<TableDataScreen> {
           body: AbsorbPointer(
             absorbing: state.loading,
             child: SingleChildScrollView(
+              controller: _scrollController,
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
@@ -141,7 +183,7 @@ class _TableDataScreenState extends State<TableDataScreen> {
                     ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
-                      vertical: 10,
+                      vertical: 8,
                     ),
                     child: Row(
                       children: [
@@ -174,6 +216,9 @@ class _TableDataScreenState extends State<TableDataScreen> {
                     label: TextConstant.noteCap,
                     child: ShadowTextField(
                       controller: _noteCtrl,
+                      focusNode: _noteFocus,
+                      textInputAction: TextInputAction.next,
+                      // 👈 shows "Next" on keyboard
                       hint: TextConstant.note,
                       keyboardType: TextInputType.text,
                       inputFormatters: [
@@ -195,6 +240,8 @@ class _TableDataScreenState extends State<TableDataScreen> {
                           child: ShadowTextField(
                             controller: _feetCtrl,
                             hint: TextConstant.feet,
+                            textInputAction: TextInputAction.next,
+                            focusNode: _feetFocus,
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                               signed: false,
@@ -211,7 +258,9 @@ class _TableDataScreenState extends State<TableDataScreen> {
                         Expanded(
                           child: ShadowTextField(
                             controller: _inchCtrl,
+                            focusNode: _inchFocus,
                             hint: TextConstant.inch,
+                            textInputAction: TextInputAction.next,
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                               signed: false,
@@ -239,6 +288,8 @@ class _TableDataScreenState extends State<TableDataScreen> {
                           label: TextConstant.qtyCap,
                           child: ShadowTextField(
                             controller: _qtyCtrl,
+                            textInputAction: TextInputAction.done,
+                            focusNode: _qtyFocus,
                             hint: TextConstant.qty,
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: false,
@@ -257,6 +308,7 @@ class _TableDataScreenState extends State<TableDataScreen> {
                       Expanded(
                         flex: 2,
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Text(
                               TextConstant.less,
@@ -281,7 +333,7 @@ class _TableDataScreenState extends State<TableDataScreen> {
                         TextConstant.total,
                         style: theme.textTheme.titleMedium,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 35),
                       Text(
                         state.records.isEmpty &&
                                 state.feet.isEmpty &&
@@ -314,9 +366,16 @@ class _TableDataScreenState extends State<TableDataScreen> {
                       ),
                       const SizedBox(width: 14),
                       Expanded(
+                        key: _nextButtonKey,
                         child: GreenButton(
                           label: 'NEXT',
-                          onPressed: () => bloc.add(RecordsNextPressed()),
+                          onPressed: () {
+                            bloc.add(RecordsNextPressed());
+
+                            Future.delayed(Duration(seconds: 1), () {
+                              FocusScope.of(context).requestFocus(_noteFocus);
+                            });
+                          },
                         ),
                       ),
                     ],

@@ -9,6 +9,8 @@ class ShadowTextField extends StatelessWidget {
     required this.keyboardType,
     required this.inputFormatters,
     required this.onChanged,
+    required this.focusNode,
+    required this.textInputAction,
   });
 
   final TextEditingController controller;
@@ -16,6 +18,9 @@ class ShadowTextField extends StatelessWidget {
   final TextInputType keyboardType;
   final List<TextInputFormatter> inputFormatters;
   final ValueChanged<String> onChanged;
+  final FocusNode focusNode;
+
+  final TextInputAction textInputAction;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +40,8 @@ class ShadowTextField extends StatelessWidget {
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
         onChanged: onChanged,
+        textInputAction: textInputAction,
+        focusNode: focusNode,
         decoration: InputDecoration(
           hintText: hint,
           filled: true,
