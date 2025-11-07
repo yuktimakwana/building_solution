@@ -47,3 +47,7 @@ class RecordsLessToggled extends RecordsEvent {
   final bool v;
   RecordsLessToggled(this.v);
 }
+class RecordsStreamError extends RecordsEvent {
+  final String message;
+  RecordsStreamError(this.message);
+}

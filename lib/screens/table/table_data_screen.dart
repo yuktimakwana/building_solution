@@ -6,6 +6,8 @@ import 'package:duplicate_building_solution/screens/table/component/grey_bar_btn
 import 'package:duplicate_building_solution/screens/table/component/labeled_field.dart';
 import 'package:duplicate_building_solution/screens/table/component/records_table.dart';
 import 'package:duplicate_building_solution/screens/table/component/shadow_fields.dart';
+import 'package:duplicate_building_solution/utils/color_constant.dart';
+import 'package:duplicate_building_solution/utils/text_constant.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,7 +15,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 enum FormMode { add, edit, insertAfter }
 
 class TableDataScreen extends StatefulWidget {
-  const TableDataScreen({super.key});
+  final String fileName;
+
+  const TableDataScreen({super.key, required this.fileName});
 
   @override
   State<TableDataScreen> createState() => _TableDataScreenState();
@@ -53,8 +57,18 @@ class _TableDataScreenState extends State<TableDataScreen> {
         if (_inchCtrl.text != s.inch) _inchCtrl.text = s.inch;
         if (_qtyCtrl.text != s.qty) _qtyCtrl.text = s.qty;
       },
+      buildWhen: (p, c) =>
+          p.selectedIndex != c.selectedIndex ||
+          p.records != c.records ||
+          p.mode != c.mode ||
+          p.total != c.total ||
+          p.lineNumber != c.lineNumber ||
+          p.buttonsEnabled != c.buttonsEnabled ||
+          p.loading != c.loading ||
+          p.error != c.error,
       builder: (context, state) {
         final hasData = state.hasData;
+
         final theme = Theme.of(context);
         final green = const Color(0xFF8BC34A);
 
@@ -63,21 +77,36 @@ class _TableDataScreenState extends State<TableDataScreen> {
           appBar: AppBar(
             backgroundColor: green,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: const Icon(
+                Icons.arrow_back_ios,
+                color: ColorConstant.naturalWhiteColor,
+              ),
               onPressed: () => Navigator.of(context).maybePop(),
             ),
             centerTitle: true,
-            title: const Text('File', style: TextStyle(color: Colors.white)),
+            title: Text(
+              widget.fileName,
+              style: TextStyle(color: ColorConstant.naturalWhiteColor),
+            ),
             actions: [
               if (hasData)
                 Padding(
                   padding: const EdgeInsets.only(right: 12),
                   child: Center(
-                    child: Text(
-                      'VIEW',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                    child: TextButton(
+                      onPressed: () {
+                        // pageTransition(context, AllTableDataScreen(
+                        //     projectName: projectName,
+                        //     fileName: fileName,
+                        //     partyName: partyName,
+                        //     tableData: tableData));
+                      },
+                      child: Text(
+                        TextConstant.view,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: ColorConstant.naturalWhiteColor,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -95,7 +124,9 @@ class _TableDataScreenState extends State<TableDataScreen> {
                     RecordsTable(
                       records: state.records,
                       selectedIndex: state.selectedIndex,
-                      onTapRow: (i) => bloc.add(RecordsRowSelected(i)),
+                      onTapRow: (i) => context.read<RecordsBloc>().add(
+                        RecordsRowSelected(i),
+                      ),
                     )
                   else
                     const SizedBox.shrink(),
@@ -129,7 +160,7 @@ class _TableDataScreenState extends State<TableDataScreen> {
                         ),
                         const SizedBox(width: 8),
                         GreyBarBtn(
-                          label: 'Add Row',
+                          label: TextConstant.addRow,
                           enabled: state.buttonsEnabled,
                           onPressed: () => bloc.add(RecordsAddRowPressed()),
                         ),
@@ -140,10 +171,10 @@ class _TableDataScreenState extends State<TableDataScreen> {
                   const SizedBox(height: 16),
 
                   LabeledField(
-                    label: 'NOTE:',
+                    label: TextConstant.noteCap,
                     child: ShadowTextField(
                       controller: _noteCtrl,
-                      hint: 'Note',
+                      hint: TextConstant.note,
                       keyboardType: TextInputType.text,
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(
@@ -157,13 +188,13 @@ class _TableDataScreenState extends State<TableDataScreen> {
                   const SizedBox(height: 12),
 
                   LabeledField(
-                    label: 'RFT:',
+                    label: TextConstant.rftCap,
                     child: Row(
                       children: [
                         Expanded(
                           child: ShadowTextField(
                             controller: _feetCtrl,
-                            hint: 'Feet',
+                            hint: TextConstant.feet,
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                               signed: false,
@@ -180,7 +211,7 @@ class _TableDataScreenState extends State<TableDataScreen> {
                         Expanded(
                           child: ShadowTextField(
                             controller: _inchCtrl,
-                            hint: 'Inch',
+                            hint: TextConstant.inch,
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                               signed: false,
@@ -205,10 +236,10 @@ class _TableDataScreenState extends State<TableDataScreen> {
                       Expanded(
                         flex: 2,
                         child: LabeledField(
-                          label: 'QTY:',
+                          label: TextConstant.qtyCap,
                           child: ShadowTextField(
                             controller: _qtyCtrl,
-                            hint: 'Qty',
+                            hint: TextConstant.qty,
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: false,
                               signed: false,
@@ -227,7 +258,10 @@ class _TableDataScreenState extends State<TableDataScreen> {
                         flex: 2,
                         child: Row(
                           children: [
-                            Text('LESS:', style: theme.textTheme.titleMedium),
+                            Text(
+                              TextConstant.less,
+                              style: theme.textTheme.titleMedium,
+                            ),
                             const SizedBox(width: 8),
                             Checkbox(
                               value: state.less,
@@ -243,7 +277,10 @@ class _TableDataScreenState extends State<TableDataScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Text('Total:', style: theme.textTheme.titleMedium),
+                      Text(
+                        TextConstant.total,
+                        style: theme.textTheme.titleMedium,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         state.records.isEmpty &&
@@ -262,10 +299,17 @@ class _TableDataScreenState extends State<TableDataScreen> {
                   const SizedBox(height: 18),
                   Row(
                     children: [
-                      Expanded(
-                        child: GreenButton(
-                          label: 'RESET',
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(5),
+                          color: ColorConstant.btnGreenColor,
+                        ),
+                        child: IconButton(
                           onPressed: () => bloc.add(RecordsResetPressed()),
+                          icon: Icon(
+                            Icons.refresh,
+                            color: ColorConstant.naturalWhiteColor,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 14),

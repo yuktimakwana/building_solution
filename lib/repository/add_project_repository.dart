@@ -24,8 +24,6 @@ class AddProjectRepository {
         'project_add_on': Timestamp.now(),
       };
 
-      print('body--------------------$body');
-
       await fireCloud.set(body);
     } on FirebaseException catch (e) {
       if (kDebugMode) {

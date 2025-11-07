@@ -27,7 +27,7 @@ class RecordsScreen extends StatelessWidget {
           fileName: fileName,
         ),
       )..add(RecordsSubscribe()),
-      child: const TableDataScreen(),
+      child: TableDataScreen(fileName: fileName),
     );
   }
 }

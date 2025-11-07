@@ -3,7 +3,8 @@ import 'dart:ui';
 class ColorConstant {
   static const naturalWhiteColor = Color.fromRGBO(255, 255, 255, 1);
   static const naturalBlackColor = Color.fromRGBO(37, 35, 35, 1);
-  static const greenColor = Color.fromRGBO(154, 190, 70, 1);
+  static const greenColor = Color.fromRGBO(154, 190, 74, 1);
+  static const btnGreenColor = Color.fromRGBO(139, 195, 70, 1);
   static const shadowTextColor = Color.fromRGBO(117, 117, 117, 0.25);
   static const primaryThemeColor = Color.fromRGBO(130, 37, 37, 10);
   static const darkGreyColor = Color.fromRGBO(122, 122, 122, 1);

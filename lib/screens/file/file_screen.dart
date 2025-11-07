@@ -5,7 +5,6 @@ import 'package:duplicate_building_solution/screens/file/file_floating_btn.dart'
 import 'package:duplicate_building_solution/screens/file/file_recycle_bin.dart';
 import 'package:duplicate_building_solution/screens/project/project_screen.dart';
 import 'package:duplicate_building_solution/screens/table/record_screen.dart';
-import 'package:duplicate_building_solution/screens/table/table_data_screen.dart';
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
 import 'package:duplicate_building_solution/utils/image_constant.dart';

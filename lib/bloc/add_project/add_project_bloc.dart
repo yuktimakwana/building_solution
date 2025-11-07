@@ -30,8 +30,6 @@ class AddProjectBloc extends Bloc<AddProjectEvent, AddProjectState> {
 
       emit(AddProjectComplete());
     } catch (error) {
-      print('error---------------------');
-      print(error);
       emit(AddProjectError(errorMessage: Globals.clientError));
     }
   }

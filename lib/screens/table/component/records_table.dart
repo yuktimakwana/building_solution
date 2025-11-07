@@ -1,5 +1,4 @@
 import 'package:duplicate_building_solution/model/record_model.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class RecordsTable extends StatelessWidget {

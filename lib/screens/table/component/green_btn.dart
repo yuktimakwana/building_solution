@@ -1,3 +1,4 @@
+import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:flutter/material.dart';
 
 class GreenButton extends StatelessWidget {
@@ -8,12 +9,11 @@ class GreenButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final green = const Color(0xFF8BC34A);
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: green,
-        foregroundColor: Colors.white,
+        backgroundColor: ColorConstant.btnGreenColor,
+        foregroundColor: ColorConstant.naturalWhiteColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         padding: const EdgeInsets.symmetric(vertical: 14),
         elevation: 2,

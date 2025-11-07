@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:duplicate_building_solution/dialog/delete_dialog.dart';
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
-import 'package:duplicate_building_solution/utils/globals.dart';
 import 'package:duplicate_building_solution/utils/image_constant.dart';
 import 'package:duplicate_building_solution/utils/text_constant.dart';
 import 'package:duplicate_building_solution/widgets/app_bar_widget.dart';

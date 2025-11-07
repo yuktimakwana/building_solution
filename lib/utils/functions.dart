@@ -57,14 +57,10 @@ class FirebaseRef {
     final user = FirebaseAuth.instance.currentUser;
     uid = user?.uid ?? '';
 
-    print('uid-----------$uid');
-
     partyUserDoc = FirebaseFirestore.instance
         .collection('building_solution')
         .doc(uid)
         .collection(collectionName);
 
-    //projectUserDoc = partyUserDoc.doc(partyName).collection('project');
-   // fileUserDoc = projectUserDoc.doc(projectName).collection('file');
   }
 }
