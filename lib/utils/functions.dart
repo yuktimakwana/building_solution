@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:duplicate_building_solution/utils/globals.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:page_transition/page_transition.dart';
@@ -26,25 +25,6 @@ void pageTransition(BuildContext context, Widget child) {
   );
 }
 
-void getTotal() {
-  Globals.total =
-      (num.parse(
-        Globals.txtQtyController.text.isEmpty
-            ? '1'
-            : Globals.txtQtyController.text,
-      )) *
-      (num.parse(
-            Globals.txtFeetController.text.isEmpty
-                ? '0'
-                : Globals.txtFeetController.text,
-          ) +
-          (num.parse(
-                Globals.txtInchController.text.isEmpty
-                    ? '0'
-                    : Globals.txtInchController.text,
-              ) /
-              12));
-}
 
 class FirebaseRef {
   static const String collectionName = 'party';

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:duplicate_building_solution/model/file_model.dart';
-import 'package:duplicate_building_solution/utils/globals.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:duplicate_building_solution/utils/text_constant.dart';
 
 class GetFileProvider {
   String partyName, projectName;
@@ -13,7 +13,7 @@ class GetFileProvider {
       required this.isRecycleBinScreen});
 
   final CollectionReference fileCollectionReference =
-      FirebaseFirestore.instance.collection(Globals.partyCollection);
+      FirebaseFirestore.instance.collection(TextConstant.partyCollection);
 
   final StreamController<List<FileModel>> fileController =
       StreamController<List<FileModel>>.broadcast();
@@ -33,9 +33,9 @@ class GetFileProvider {
   void _requestChats() {
     var pageChatQuery = fileCollectionReference
         .doc(partyName)
-        .collection(Globals.projectCollection)
+        .collection(TextConstant.projectCollection)
         .doc(projectName)
-        .collection(Globals.fileCollection)
+        .collection(TextConstant.fileCollection)
         .orderBy('file_add_on', descending: true)
         .where('file_deleted', isEqualTo: isRecycleBinScreen ? 'yes' : 'no')
         .limit(chatLimit);

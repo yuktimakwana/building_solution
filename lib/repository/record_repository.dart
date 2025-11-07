@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:duplicate_building_solution/model/record_model.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
+import 'package:duplicate_building_solution/utils/text_constant.dart';
 
 class RecordsRepository {
   RecordsRepository({
@@ -15,11 +16,11 @@ class RecordsRepository {
 
   CollectionReference get _col => FirebaseRef.partyUserDoc
       .doc(partyName)
-      .collection('project')
+      .collection(TextConstant.projectCollection)
       .doc(projectName)
-      .collection('file')
+      .collection(TextConstant.fileCollection)
       .doc(fileName)
-      .collection('records');
+      .collection(TextConstant.recordsCollection);
 
   Stream<List<RecordModel>> watchAll() => _col
       .orderBy('id_column')

@@ -104,7 +104,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     TextConstant.signUpBtn,
                     style: TextStyle(
                       color: Colors.white,
@@ -242,7 +242,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     onPressed: () {
                       Navigator.pushReplacementNamed(context, '/signin');
                     },
-                    child: const Text(
+                    child: Text(
                       TextConstant.alreadyUser,
                       style: TextStyle(
                         color: Colors.white,

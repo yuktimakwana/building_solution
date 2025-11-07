@@ -1,5 +1,5 @@
 import 'package:duplicate_building_solution/repository/add_project_repository.dart';
-import 'package:duplicate_building_solution/utils/globals.dart';
+import 'package:duplicate_building_solution/utils/text_constant.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meta/meta.dart';
 
@@ -30,7 +30,7 @@ class AddProjectBloc extends Bloc<AddProjectEvent, AddProjectState> {
 
       emit(AddProjectComplete());
     } catch (error) {
-      emit(AddProjectError(errorMessage: Globals.clientError));
+      emit(AddProjectError(errorMessage: TextConstant.clientError));
     }
   }
 }

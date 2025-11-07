@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
-import 'package:duplicate_building_solution/utils/globals.dart';
+import 'package:duplicate_building_solution/utils/text_constant.dart';
 import 'package:flutter/foundation.dart';
 
 class AddFileRepository {
@@ -15,9 +15,9 @@ class AddFileRepository {
     try {
       final fireCloud = FirebaseRef.partyUserDoc
           .doc(partyName)
-          .collection(Globals.projectCollection)
+          .collection(TextConstant.projectCollection)
           .doc(projectName)
-          .collection(Globals.fileCollection)
+          .collection(TextConstant.fileCollection)
           .doc(fileName);
 
       final body = {

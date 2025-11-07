@@ -104,7 +104,7 @@ class _SignInScreenState extends State<SignInScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Center(
+                   Center(
                     child: Text(
                       TextConstant.signInBtn,
                       style: TextStyle(
@@ -189,7 +189,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                       ),
                       onPressed: _signIn,
-                      child: const Text(
+                      child:  Text(
                         TextConstant.signInBtn,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
@@ -206,7 +206,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       onPressed: () {
                         Navigator.pushReplacementNamed(context, '/signUp');
                       },
-                      child: const Text(
+                      child:  Text(
                         TextConstant.newUser,
                         style: TextStyle(color: Colors.white, fontSize: 16),
                       ),

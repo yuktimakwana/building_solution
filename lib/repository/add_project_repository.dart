@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
+import 'package:duplicate_building_solution/utils/text_constant.dart';
 import 'package:flutter/foundation.dart';
 
 class AddProjectRepository {
@@ -13,7 +14,7 @@ class AddProjectRepository {
     try {
       final fireCloud = FirebaseRef.partyUserDoc
           .doc(partyName)
-          .collection("project")
+          .collection(TextConstant.projectCollection)
           .doc(projectName);
 
       final body = {

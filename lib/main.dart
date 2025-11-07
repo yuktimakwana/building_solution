@@ -28,12 +28,10 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ChangeNotifierEx()),
-        ChangeNotifierProvider(create: (_) => UpdateLineNumber()),
-        ChangeNotifierProvider(create: (_) => CountTotalLess()),
+
         ChangeNotifierProvider(create: (_) => ErrorValidation()),
         ChangeNotifierProvider(create: (_) => ScrollToUpOnKb()),
-        ChangeNotifierProvider(create: (_) => AddRowNotifier()),
-        ChangeNotifierProvider(create: (_) => ChangeTextStyle()),
+
         ChangeNotifierProvider(create: (_) => GetPartyProvider()),
       ],
       child: ScreenUtilInit(

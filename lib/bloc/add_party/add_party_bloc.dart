@@ -1,5 +1,5 @@
 import 'package:duplicate_building_solution/repository/add_party_repository.dart';
-import 'package:duplicate_building_solution/utils/globals.dart';
+import 'package:duplicate_building_solution/utils/text_constant.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meta/meta.dart';
 
@@ -24,7 +24,7 @@ class AddPartyBloc extends Bloc<AddPartyEvent, AddPartyState> {
 
       emit(AddPartyComplete());
     } catch (e) {
-      emit(AddPartyError(errorMessage: Globals.clientError));
+      emit(AddPartyError(errorMessage: TextConstant.clientError));
     }
   }
 }

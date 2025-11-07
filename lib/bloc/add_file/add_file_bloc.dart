@@ -1,5 +1,5 @@
 import 'package:duplicate_building_solution/repository/add_file_repository.dart';
-import 'package:duplicate_building_solution/utils/globals.dart';
+import 'package:duplicate_building_solution/utils/text_constant.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meta/meta.dart';
 
@@ -26,7 +26,7 @@ class AddFileBloc extends Bloc<AddFileEvent, AddFileState> {
 
       emit(AddFileComplete());
     } catch (e) {
-      emit(AddFileError(errorMessage: Globals.clientError));
+      emit(AddFileError(errorMessage: TextConstant.clientError));
     }
   }
 }

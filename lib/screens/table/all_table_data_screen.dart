@@ -2,7 +2,6 @@ import 'package:duplicate_building_solution/excel_file_exporter.dart';
 
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
-import 'package:duplicate_building_solution/utils/globals.dart';
 import 'package:duplicate_building_solution/utils/height_constant.dart';
 import 'package:duplicate_building_solution/widgets/app_bar_widget.dart';
 import 'package:duplicate_building_solution/widgets/loading_widget.dart';
@@ -108,9 +107,6 @@ class AllTableDataScreenState extends State<AllTableDataScreen> {
             } else {
               var tableData = snapshot.data?.docs;
               excelData = tableData ?? [];
-              Globals.tableId = (tableData ?? []).isEmpty
-                  ? 0
-                  : tableData?.first['Globals.idColumn'];
 
               return SingleChildScrollView(
                 child: Padding(

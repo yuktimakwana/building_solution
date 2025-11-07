@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:duplicate_building_solution/utils/globals.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:duplicate_building_solution/utils/text_constant.dart';
 import 'package:excel/excel.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart';
@@ -11,10 +11,11 @@ import 'package:share_plus/share_plus.dart';
 class ExcelReportExtractor {
   String partyName, projectName, fileName;
 
-  ExcelReportExtractor(
-      {required this.partyName,
-      required this.projectName,
-      required this.fileName});
+  ExcelReportExtractor({
+    required this.partyName,
+    required this.projectName,
+    required this.fileName,
+  });
 
   final Excel excelFile = Excel.createExcel();
 
@@ -24,23 +25,24 @@ class ExcelReportExtractor {
 
     // Define the desired column order
     final desiredOrder = [
-      Globals.idColumn,
-      Globals.noteColumn,
-      Globals.feetColumn,
-      Globals.inchColumn,
-      Globals.rftColumn,
-      Globals.qtyColumn,
-      Globals.totalColumn,
-      Globals.dataAddOnColumn
+      TextConstant.idColumn,
+      TextConstant.noteColumn,
+      TextConstant.feetColumn,
+      TextConstant.inchColumn,
+      TextConstant.rftColumn,
+      TextConstant.qtyColumn,
+      TextConstant.totalColumn,
+      TextConstant.dataAddOnColumn,
     ];
-
 
     // Write headers
     int colNum = 0;
     for (var header in desiredOrder) {
       sheetObject
           .cell(CellIndex.indexByString('${String.fromCharCode(65 + colNum)}1'))
-          .value = TextCellValue(header);
+          .value = TextCellValue(
+        header,
+      );
       colNum++;
     }
 
@@ -60,9 +62,13 @@ class ExcelReportExtractor {
           cellValue = TextCellValue(value ?? '');
         }
         sheetObject
-            .cell(CellIndex.indexByString(
-                '${String.fromCharCode(65 + colNum)}${rowNum + 1}'))
-            .value = cellValue;
+                .cell(
+                  CellIndex.indexByString(
+                    '${String.fromCharCode(65 + colNum)}${rowNum + 1}',
+                  ),
+                )
+                .value =
+            cellValue;
         colNum++;
       }
       rowNum++;
@@ -70,11 +76,11 @@ class ExcelReportExtractor {
 
     // Determine columns to sum
     final columnsToSum = [
-      Globals.feetColumn,
-      Globals.inchColumn,
-      Globals.rftColumn,
-      Globals.qtyColumn,
-      Globals.totalColumn
+      TextConstant.feetColumn,
+      TextConstant.inchColumn,
+      TextConstant.rftColumn,
+      TextConstant.qtyColumn,
+      TextConstant.totalColumn,
     ]; // Replace with your column names
 
     // Find column indexes
@@ -95,8 +101,11 @@ class ExcelReportExtractor {
         num total = 0;
         for (var row = 1; row < sheetObject.rows.length; row++) {
           final cellValue = sheetObject
-              .cell(CellIndex.indexByString(
-                  '${String.fromCharCode(65 + columnIndex)}${row + 1}'))
+              .cell(
+                CellIndex.indexByString(
+                  '${String.fromCharCode(65 + columnIndex)}${row + 1}',
+                ),
+              )
               .value;
           // if ((double.tryParse(cellValue.toString()) ?? 0) > 0) {
           total += (double.tryParse(cellValue.toString()) ?? 0);
@@ -104,21 +113,32 @@ class ExcelReportExtractor {
         }
 
         sheetObject
-            .cell(CellIndex.indexByString(
-                '${String.fromCharCode(65 + columnIndex)}$lastRow'))
-            .value = TextCellValue(total.toStringAsFixed(2));
+            .cell(
+              CellIndex.indexByString(
+                '${String.fromCharCode(65 + columnIndex)}$lastRow',
+              ),
+            )
+            .value = TextCellValue(
+          total.toStringAsFixed(2),
+        );
       }
     }
 
     // Find the index of the "ID" column
-    final idColumnIndex = sheetObject.rows.first
-        .indexWhere((cell) => cell?.value == TextCellValue(Globals.idColumn));
+    final idColumnIndex = sheetObject.rows.first.indexWhere(
+      (cell) => cell?.value == TextCellValue(TextConstant.idColumn),
+    );
 
     // Add "Total" label to the "ID" column
     sheetObject
-        .cell(CellIndex.indexByString(
-            '${String.fromCharCode(65 + idColumnIndex)}$lastRow'))
-        .value = TextCellValue(Globals.totalColumn);
+        .cell(
+          CellIndex.indexByString(
+            '${String.fromCharCode(65 + idColumnIndex)}$lastRow',
+          ),
+        )
+        .value = TextCellValue(
+      TextConstant.totalColumn,
+    );
 
     // // Write headers
     // int rowNum = 0;
@@ -220,7 +240,7 @@ class ExcelReportExtractor {
     // defaultSheet.setColumnAutoFit(1);
     // defaultSheet.setColumnAutoFit(2);
 
-    String finalNameOfFile =  "${partyName}_${projectName}_$fileName.xlsx";
+    String finalNameOfFile = "${partyName}_${projectName}_$fileName.xlsx";
 
     excelFile.save(fileName: finalNameOfFile);
     var fileBytes = excelFile.save(fileName: finalNameOfFile);
@@ -231,6 +251,8 @@ class ExcelReportExtractor {
       ..writeAsBytesSync(fileBytes ?? []);
 
     // Share the file using share_plus
-    await SharePlus.instance.share(ShareParams(text: "${directory.path}/$finalNameOfFile"));
+    await SharePlus.instance.share(
+      ShareParams(text: "${directory.path}/$finalNameOfFile"),
+    );
   }
 }
