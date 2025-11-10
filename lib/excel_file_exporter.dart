@@ -252,7 +252,7 @@ class ExcelReportExtractor {
 
     // Share the file using share_plus
     await SharePlus.instance.share(
-      ShareParams(text: "${directory.path}/$finalNameOfFile"),
+      ShareParams(files: [XFile("${directory.path}/$finalNameOfFile")]),
     );
   }
 }

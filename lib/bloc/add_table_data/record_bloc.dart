@@ -1,11 +1,13 @@
 import 'dart:async';
 
-import 'package:duplicate_building_solution/bloc/add_table_data/record_event.dart';
-import 'package:duplicate_building_solution/bloc/add_table_data/record_state.dart';
 import 'package:duplicate_building_solution/model/record_model.dart';
 import 'package:duplicate_building_solution/repository/record_repository.dart';
 import 'package:duplicate_building_solution/screens/table/table_data_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+part 'record_event.dart';
+
+part 'record_state.dart';
 
 class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   RecordsBloc(this.repo) : super(const RecordsState(records: [])) {

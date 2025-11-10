@@ -1,5 +1,4 @@
 import 'package:duplicate_building_solution/bloc/add_table_data/record_bloc.dart';
-import 'package:duplicate_building_solution/bloc/add_table_data/record_event.dart';
 import 'package:duplicate_building_solution/repository/record_repository.dart';
 import 'package:duplicate_building_solution/screens/table/table_data_screen.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +26,11 @@ class RecordsScreen extends StatelessWidget {
           fileName: fileName,
         ),
       )..add(RecordsSubscribe()),
-      child: TableDataScreen(fileName: fileName),
+      child: TableDataScreen(
+        fileName: fileName,
+        projectName: projectName,
+        partyName: partyName,
+      ),
     );
   }
 }

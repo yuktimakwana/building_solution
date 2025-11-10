@@ -94,7 +94,7 @@ class TextConstant {
   static String fileCollection = 'file';
   static String recordsCollection = 'records';
 
-  static String idColumn = 'no';
+  static String idColumn = 'id_column';
   static String noteColumn = 'note';
   static String rftColumn = 'rft';
   static String inchColumn = 'inch';
@@ -103,4 +103,5 @@ class TextConstant {
   static String lessColumn = 'less';
   static String feetColumn = 'feet';
   static String dataAddOnColumn = 'data_add_on';
+  static String userNotFound = 'User Not Found';
 }

@@ -1,5 +1,5 @@
 
-import 'package:duplicate_building_solution/model/record_model.dart';
+part of 'record_bloc.dart';
 
 abstract class RecordsEvent {}
 

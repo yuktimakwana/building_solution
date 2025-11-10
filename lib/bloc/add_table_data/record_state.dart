@@ -1,5 +1,6 @@
-import 'package:duplicate_building_solution/model/record_model.dart';
-import 'package:duplicate_building_solution/screens/table/table_data_screen.dart';
+part of 'record_bloc.dart';
+
+
 
 class RecordsState {
    final List<RecordModel> records;

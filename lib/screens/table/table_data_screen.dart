@@ -1,12 +1,12 @@
 import 'package:duplicate_building_solution/bloc/add_table_data/record_bloc.dart';
-import 'package:duplicate_building_solution/bloc/add_table_data/record_event.dart';
-import 'package:duplicate_building_solution/bloc/add_table_data/record_state.dart';
 import 'package:duplicate_building_solution/screens/table/component/green_btn.dart';
 import 'package:duplicate_building_solution/screens/table/component/grey_bar_btn.dart';
 import 'package:duplicate_building_solution/screens/table/component/labeled_field.dart';
 import 'package:duplicate_building_solution/screens/table/component/records_table.dart';
 import 'package:duplicate_building_solution/screens/table/component/shadow_fields.dart';
+import 'package:duplicate_building_solution/screens/table/view_record_screen.dart';
 import 'package:duplicate_building_solution/utils/color_constant.dart';
+import 'package:duplicate_building_solution/utils/functions.dart';
 import 'package:duplicate_building_solution/utils/text_constant.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,9 +15,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 enum FormMode { add, edit, insertAfter }
 
 class TableDataScreen extends StatefulWidget {
-  final String fileName;
+  final String fileName,partyName,projectName;
 
-  const TableDataScreen({super.key, required this.fileName});
+  const TableDataScreen({super.key, required this.fileName, required this.partyName,required this.projectName});
 
   @override
   State<TableDataScreen> createState() => _TableDataScreenState();
@@ -60,7 +60,6 @@ class _TableDataScreenState extends State<TableDataScreen> {
       }
     });
   }
-
 
   @override
   void dispose() {
@@ -136,11 +135,14 @@ class _TableDataScreenState extends State<TableDataScreen> {
                   child: Center(
                     child: TextButton(
                       onPressed: () {
-                        // pageTransition(context, AllTableDataScreen(
-                        //     projectName: projectName,
-                        //     fileName: fileName,
-                        //     partyName: partyName,
-                        //     tableData: tableData));
+                        pageTransition(
+                          context,
+                          ViewRecordsScreen(
+                            projectName: widget.projectName,
+                            fileName: widget.fileName,
+                            partyName: widget.partyName,
+                          ),
+                        );
                       },
                       child: Text(
                         TextConstant.view,

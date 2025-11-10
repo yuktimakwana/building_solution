@@ -34,6 +34,7 @@ class _SplashScreenState extends State<SplashScreen> {
   // }
 
   Future<void> getUser() async {
+
     SharedPreferences sp = await SharedPreferences.getInstance();
     String email = sp.getString('email') ?? '';
 
