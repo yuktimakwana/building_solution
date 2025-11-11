@@ -42,6 +42,8 @@ class _PartyScreenState extends State<PartyScreen> {
   @override
   void initState() {
     super.initState();
+    FirebaseRef.init();
+
     _initStream();
     _scrollController.addListener(_onScroll);
 

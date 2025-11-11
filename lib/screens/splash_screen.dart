@@ -1,5 +1,5 @@
-import 'package:duplicate_building_solution/screens/party/party_screen.dart';
 import 'package:duplicate_building_solution/Auth/sign_in.dart';
+import 'package:duplicate_building_solution/screens/party/party_screen.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
 import 'package:duplicate_building_solution/utils/height_constant.dart';
 import 'package:duplicate_building_solution/utils/image_constant.dart';
@@ -24,23 +24,22 @@ class _SplashScreenState extends State<SplashScreen> {
       getUser();
     });
 
-    //clearSharedPreference();
+    clearSharedPreference();
     super.initState();
   }
 
-  // Future<void> clearSharedPreference() async {
-  //   final SharedPreferences sp = await SharedPreferences.getInstance();
-  //   sp.clear();
-  // }
+  Future<void> clearSharedPreference() async {
+    final SharedPreferences sp = await SharedPreferences.getInstance();
+    sp.clear();
+  }
 
   Future<void> getUser() async {
+    String uid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-    SharedPreferences sp = await SharedPreferences.getInstance();
-    String email = sp.getString('email') ?? '';
+    if (uid.isNotEmpty) {
+      await FirebaseRef.init();
 
-    if (!mounted) return; // ✅ Safety check
-
-    if (email == FirebaseAuth.instance.currentUser?.email) {
+      if (!mounted) return;
       pageTransition(context, PartyScreen());
     } else {
       pageTransition(context, const SignInScreen());
@@ -67,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen> {
               TextConstant.bestBuildingSolution,
               style: StyleConstant.splashTextStyle,
               textAlign: TextAlign.center,
-            )
+            ),
           ],
         ),
       ),

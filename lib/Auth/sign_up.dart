@@ -120,6 +120,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   textForms(
                     textEditingController: _emailController,
                     hintText: TextConstant.emailHint,
+                    textInputAction: TextInputAction.next,
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -142,6 +143,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     textEditingController: _passwordController,
                     obscureText: !_isPasswordVisible,
                     hintText: TextConstant.pwdHint,
+                    textInputAction: TextInputAction.next,
                     icon: IconButton(
                       icon: Icon(
                         _isPasswordVisible
@@ -178,6 +180,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   textForms(
                     textEditingController: _confirmPasswordController,
                     obscureText: !_isConfirmPasswordVisible,
+                    textInputAction: TextInputAction.done,
                     hintText: TextConstant.confirmPwdHint,
                     icon: IconButton(
                       icon: Icon(
@@ -264,6 +267,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 // ✅ TextFormField Widget
 Widget textForms({
   required TextEditingController textEditingController,
+  required TextInputAction textInputAction,
   bool obscureText = false,
   TextInputType keyboardType = TextInputType.emailAddress,
   Widget icon = const SizedBox(),
@@ -274,6 +278,7 @@ Widget textForms({
     controller: textEditingController,
     obscureText: obscureText,
     keyboardType: keyboardType,
+    textInputAction: textInputAction,
     decoration: InputDecoration(
       hintText: hintText,
       fillColor: Colors.white,
