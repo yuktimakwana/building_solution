@@ -40,3 +40,74 @@ class FirebaseRef {
         .collection(collectionName);
   }
 }
+
+
+
+/// Copies all documents (and subcollections) from [sourcePath] to [destinationPath]
+
+
+Future<void> copyUserData({
+  required String uid,
+}) async {
+  final firestore = FirebaseFirestore.instance;
+  final oldRoot = firestore.collection('building_solution').doc(uid);
+  final newRoot = firestore
+      .collection('nwCollection')
+      .doc('abc')
+      .collection('building_solution')
+      .doc(uid);
+
+  print('🚀 Copying data for user: $uid');
+
+  final partySnapshot = await oldRoot.collection('party').get();
+  for (final partyDoc in partySnapshot.docs) {
+    await newRoot.collection('party').doc(partyDoc.id).set(partyDoc.data());
+    print('📁 Party: ${partyDoc.id}');
+
+    // Copy projects
+    final projectSnapshot =
+    await partyDoc.reference.collection('project').get();
+    for (final projectDoc in projectSnapshot.docs) {
+      await newRoot
+          .collection('party')
+          .doc(partyDoc.id)
+          .collection('project')
+          .doc(projectDoc.id)
+          .set(projectDoc.data());
+      print('📄 Project: ${projectDoc.id}');
+
+      // Copy files
+      final fileSnapshot =
+      await projectDoc.reference.collection('file').get();
+      for (final fileDoc in fileSnapshot.docs) {
+        await newRoot
+            .collection('party')
+            .doc(partyDoc.id)
+            .collection('project')
+            .doc(projectDoc.id)
+            .collection('file')
+            .doc(fileDoc.id)
+            .set(fileDoc.data());
+        print('📦 File: ${fileDoc.id}');
+
+        // Copy records
+        final recordsSnapshot =
+        await fileDoc.reference.collection('records').get();
+        for (final recordDoc in recordsSnapshot.docs) {
+          await newRoot
+              .collection('party')
+              .doc(partyDoc.id)
+              .collection('project')
+              .doc(projectDoc.id)
+              .collection('file')
+              .doc(fileDoc.id)
+              .collection('records')
+              .doc(recordDoc.id)
+              .set(recordDoc.data());
+        }
+      }
+    }
+  }
+
+  print('✅ Migration complete for user: $uid');
+}

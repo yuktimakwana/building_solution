@@ -13,6 +13,7 @@ import 'package:duplicate_building_solution/widgets/default_image.dart';
 import 'package:duplicate_building_solution/widgets/error_widget.dart';
 import 'package:duplicate_building_solution/widgets/loading_widget.dart';
 import 'package:duplicate_building_solution/widgets/no_project_found.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class PartyScreen extends StatefulWidget {
@@ -265,6 +266,14 @@ class _PartyScreenState extends State<PartyScreen> {
               },
             ),
           ),
+
+          ElevatedButton(
+            onPressed: () async {
+              final uid = FirebaseAuth.instance.currentUser!.uid;
+              await copyUserData(uid: uid);
+            },
+            child: const Text('Migrate Firestore Data'),
+          )
         ],
       ),
       floatingActionButton: floatingActionButton(

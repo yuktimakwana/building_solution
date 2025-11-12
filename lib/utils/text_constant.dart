@@ -14,11 +14,11 @@ class TextConstant {
   static String yourFileAppearHere = 'Your files will appear here.';
   static String yourPartyAppearHere = 'Your party name will appear here.';
   static String yourDeletedPartyAppearHere =
-      'YoStringleted party name will appear here.';
+      'Your deleted party name will appear here.';
   static String yourDeletedProjectAppearHere =
-      'YoStringleted project name will appear here.';
+      'Your deleted project name will appear here.';
   static String yourDeletedFileAppearHere =
-      'YoStringleted file name will appear here.';
+      'Your deleted file name will appear here.';
   static String addProject = 'Add project';
   static String addProjectCap = 'ADD PROJECT';
   static String addFileCap = 'ADD FILE';
@@ -68,12 +68,12 @@ class TextConstant {
   static String tooManyReqError = 'Too many failed attempts. Try again later.';
   static String somethingWrong = 'Something went wrong. Please try again.';
   static String unexpectedError =
-      'AnStringpected error occurred. Please try again.';
+      'An unexpected error occurred. Please try again.';
   static String pwdNotEmptyError = 'Password cannot be empty';
   static String pwdLengthError =
       'Password must be at least \n6 characters long';
   static String pwdAlphaNumError =
-      'PaStringd must contain at least \none alphabet & one digit';
+      'Password must contain at least \none alphabet & one digit';
   static String pwdCPwdMatch = 'Password & confirm password \ndo not match';
   static String emailNotEmptyError = 'Email cannot be empty';
   static String enterValidEmailError = 'Enter a valid email';

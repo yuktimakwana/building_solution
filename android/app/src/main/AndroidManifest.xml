@@ -7,8 +7,8 @@
 
     <application
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
-        android:label="duplicate_building_solution"
+        android:icon="@mipmap/app_icon"
+        android:label="TBBS"
         android:requestLegacyExternalStorage="true">
         <activity
             android:name=".MainActivity"
