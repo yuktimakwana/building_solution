@@ -21,19 +21,9 @@ Widget projectFloatingBtn({
 }) {
   return Consumer<ErrorValidation>(
     builder: (context, error, child) {
-      String projectName = '';
-
       AddProjectBloc addProjectBloc = AddProjectBloc(
         addProjectRepository: AddProjectRepository(),
       );
-
-      void duplicateProjectName() {
-        for (int i = 0; i < projectModel.length; i++) {
-          if (projectNameController.text == projectModel[i].projectName) {
-            projectName = projectModel[i].projectName ?? '';
-          }
-        }
-      }
 
       return FloatingActionButton(
         backgroundColor: ColorConstant.greenColor,
@@ -77,28 +67,48 @@ Widget projectFloatingBtn({
                         title: TextConstant.create,
                         onPressed: changeNotifierEx.isChecked
                             ? () {
-                                duplicateProjectName();
-                                if (projectNameController.text
-                                        .toLowerCase()
-                                        .trim() ==
-                                    projectName.toLowerCase().trim()) {
+                                if (projectNameController.text.isEmpty) {
                                   error.setValue(
-                                    '${TextConstant.projectName} ${TextConstant.alreadyExist}',
+                                    TextConstant.projectNameRequired,
                                   );
                                 } else {
-                                  if (!addProjectBloc.isClosed) {
-                                    addProjectBloc.add(
-                                      NewAddProjectEvent(
-                                        partyName: partyName,
-                                        projectDeleted: 'no',
-                                        projectName: projectNameController.text,
-                                        projectNameLower: projectNameController
-                                            .text
+                                  final enteredName = projectNameController.text
+                                      .trim()
+                                      .toLowerCase();
+
+                                  final isDuplicate = projectModel.any((
+                                    project,
+                                  ) {
+                                    final existingName =
+                                        (project.projectNameLower ?? "")
                                             .trim()
                                             .replaceAll(RegExp(r'\s+'), '')
-                                            .toLowerCase(),
+                                            .toLowerCase();
+
+                                    final newName = enteredName.replaceAll(
+                                      RegExp(r'\s+'),
+                                      '',
+                                    );
+
+                                    return existingName == newName;
+                                  });
+
+                                  if (isDuplicate) {
+                                    error.setValue(
+                                      '${TextConstant.projectName} ${TextConstant.alreadyExist}',
+                                    );
+                                    return;
+                                  } else {
+                                    addProjectBloc.add(
+                                      NewAddProjectEvent(
                                         projectDescription:
                                             projectDescController.text,
+                                        projectName: projectNameController.text
+                                            .trim(),
+                                        partyName: partyName,
+                                        projectNameLower: enteredName
+                                            .replaceAll(RegExp(r'\s+'), ''),
+                                        projectDeleted: 'no',
                                       ),
                                     );
                                   }

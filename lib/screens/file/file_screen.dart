@@ -155,63 +155,69 @@ class _FileScreenState extends State<FileScreen> {
         pageTransition(context, ProjectScreen(partyName: widget.partyName));
       },
 
-      child: Scaffold(
-        appBar: appBarWidget(
-          searchEditingController: _searchController,
-          onClose: () {
-            _searchController.clear();
-            FocusScope.of(context).unfocus();
-            setState(() => _searchTerm = '');
-            _resetPaging();
-            _initStream();
-          },
-          leadingPress: () {
-            pageTransition(
-              context,
-              FileRecycleBinScreen(
-                partyName: widget.partyName,
-                projectName: widget.projectName,
-              ),
+      child: StreamBuilder<QuerySnapshot>(
+        stream: _firstPageStream,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return errorWidget(context);
+          }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return loadingWidget(context);
+          }
+
+          final firstPageDocs = snapshot.data?.docs ?? [];
+          final combined = {
+            for (var doc in [...firstPageDocs, ..._extraItems])
+              if ((doc.data() as Map<String, dynamic>)['file_deleted'] == 'no')
+                doc.id: doc,
+          }.values.toList();
+
+          fileModel = combined
+              .map(
+                (doc) =>
+                    FileModel.fromMap(doc.data() as Map<String, dynamic>)
+                      ..fileName = doc.id,
+              )
+              .toList();
+
+          _hasMore = firstPageDocs.length == _pageSize;
+
+          if (combined.isEmpty) {
+            return NoProjectFound(
+              image: ImageConstant.noFileImage,
+              title: TextConstant.noAnyFileYet,
+              subTitle: TextConstant.yourFileAppearHere,
             );
-          },
-          context: context,
-          title: widget.projectName,
-          color: ColorConstant.greenColor,
-        ),
-        body: Column(
-          children: [
-            const SizedBox(height: 10),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: _firstPageStream,
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return errorWidget(context);
-                  }
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return loadingWidget(context);
-                  }
+          }
 
-                  final firstPageDocs = snapshot.data?.docs ?? [];
-                  final combined = {
-                    for (var doc in [...firstPageDocs, ..._extraItems])
-                      if ((doc.data()
-                              as Map<String, dynamic>)['file_deleted'] ==
-                          'no')
-                        doc.id: doc,
-                  }.values.toList();
-
-                  _hasMore = firstPageDocs.length == _pageSize;
-
-                  if (combined.isEmpty) {
-                    return NoProjectFound(
-                      image: ImageConstant.noFileImage,
-                      title: TextConstant.noAnyFileYet,
-                      subTitle: TextConstant.yourFileAppearHere,
-                    );
-                  }
-
-                  return ListView.builder(
+          return Scaffold(
+            appBar: appBarWidget(
+              searchEditingController: _searchController,
+              onClose: () {
+                _searchController.clear();
+                FocusScope.of(context).unfocus();
+                setState(() => _searchTerm = '');
+                _resetPaging();
+                _initStream();
+              },
+              leadingPress: () {
+                pageTransition(
+                  context,
+                  FileRecycleBinScreen(
+                    partyName: widget.partyName,
+                    projectName: widget.projectName,
+                  ),
+                );
+              },
+              context: context,
+              title: widget.projectName,
+              color: ColorConstant.greenColor,
+            ),
+            body: Column(
+              children: [
+                const SizedBox(height: 10),
+                Expanded(
+                  child: ListView.builder(
                     controller: _scrollController,
                     itemCount: combined.length + (_hasMore ? 1 : 0),
                     itemBuilder: (context, index) {
@@ -289,20 +295,20 @@ class _FileScreenState extends State<FileScreen> {
                         ),
                       );
                     },
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        floatingActionButton: fileFloatingBtn(
-          fileNameController: fileNameController,
-          fileDescController: fileDescController,
-          fileModel: fileModel,
-          partyName: widget.partyName,
-          projectName: widget.projectName,
-          fileScrollController: _scrollController,
-        ),
+            floatingActionButton: fileFloatingBtn(
+              fileNameController: fileNameController,
+              fileDescController: fileDescController,
+              fileModel: fileModel,
+              partyName: widget.partyName,
+              projectName: widget.projectName,
+              fileScrollController: _scrollController,
+            ),
+          );
+        },
       ),
     );
   }

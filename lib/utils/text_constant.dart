@@ -32,7 +32,6 @@ class TextConstant {
   static String projectNameRequired = 'Project name is required';
   static String folderNameRequired = 'Folder name is required';
   static String partyNameRequired = 'Party name is required';
-  static String partyNameAlreadyExist = 'Party name already existed';
   static String addProjectSuccessfully = 'Project added';
   static String addFolderSuccessfully = 'Folder added';
   static String reset = 'RESET';

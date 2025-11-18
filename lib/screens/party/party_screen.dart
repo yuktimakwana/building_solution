@@ -13,7 +13,6 @@ import 'package:duplicate_building_solution/widgets/default_image.dart';
 import 'package:duplicate_building_solution/widgets/error_widget.dart';
 import 'package:duplicate_building_solution/widgets/loading_widget.dart';
 import 'package:duplicate_building_solution/widgets/no_project_found.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class PartyScreen extends StatefulWidget {
@@ -141,65 +140,65 @@ class _PartyScreenState extends State<PartyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: appBarWidget(
-        leadingPress: () {
-          pageTransition(context, const PartyRecycleBin());
-        },
-        searchEditingController: _searchController,
-        onClose: () {
-          _searchController.clear();
-          FocusScope.of(context).unfocus();
-          setState(() => _searchTerm = '');
-          _resetPaging();
-          _initStream();
-        },
-        context: context,
-        title: TextConstant.party,
-        color: ColorConstant.greenColor,
-      ),
-      body: Column(
-        children: [
-          const SizedBox(height: 10),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _firstPageStream,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return errorWidget(context);
-                }
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return loadingWidget(context);
-                }
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firstPageStream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return errorWidget(context);
+        }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return loadingWidget(context);
+        }
 
-                final firstPageDocs = snapshot.data?.docs ?? [];
-                final combined = {
-                  for (var doc in [...firstPageDocs, ..._extraItems])
-                    if ((doc.data() as Map<String, dynamic>)['party_deleted'] ==
-                        'no')
-                      doc.id: doc,
-                }.values.toList();
+        final firstPageDocs = snapshot.data?.docs ?? [];
+        final combined = {
+          for (var doc in [...firstPageDocs, ..._extraItems])
+            if ((doc.data() as Map<String, dynamic>)['party_deleted'] == 'no')
+              doc.id: doc,
+        }.values.toList();
 
-                _hasMore = firstPageDocs.length == _pageSize;
+        partyModel = combined
+            .map(
+              (doc) =>
+                  PartyModel.fromMap(doc.data() as Map<String, dynamic>)
+                    ..partyName = doc.id,
+            )
+            .toList();
 
-                partyModel = combined.map(
-                      (doc) =>
-                          PartyModel.fromMap(doc.data() as Map<String, dynamic>)
-                            ..partyName = doc.id,
-                    )
-                    .toList();
+        _hasMore = firstPageDocs.length == _pageSize;
 
-                print('party Length-----------${partyModel.length}');
+        print('party------${partyModel.length}');
 
-                if (combined.isEmpty) {
-                  return NoProjectFound(
-                    image: ImageConstant.noPartyImage,
-                    title: TextConstant.noAnyPartyYet,
-                    subTitle: TextConstant.yourPartyAppearHere,
-                  );
-                }
+        if (combined.isEmpty) {
+          return NoProjectFound(
+            image: ImageConstant.noPartyImage,
+            title: TextConstant.noAnyPartyYet,
+            subTitle: TextConstant.yourPartyAppearHere,
+          );
+        }
 
-                return ListView.builder(
+        return Scaffold(
+          appBar: appBarWidget(
+            leadingPress: () {
+              pageTransition(context, const PartyRecycleBin());
+            },
+            searchEditingController: _searchController,
+            onClose: () {
+              _searchController.clear();
+              FocusScope.of(context).unfocus();
+              setState(() => _searchTerm = '');
+              _resetPaging();
+              _initStream();
+            },
+            context: context,
+            title: TextConstant.party,
+            color: ColorConstant.greenColor,
+          ),
+          body: Column(
+            children: [
+              const SizedBox(height: 10),
+              Expanded(
+                child: ListView.builder(
                   controller: _scrollController,
                   itemCount: combined.length + (_hasMore ? 1 : 0),
                   itemBuilder: (context, index) {
@@ -271,25 +270,25 @@ class _PartyScreenState extends State<PartyScreen> {
                       ),
                     );
                   },
-                );
-              },
-            ),
+                ),
+              ),
+              // ElevatedButton(
+              //   onPressed: () async {
+              //     final uid = FirebaseAuth.instance.currentUser!.uid;
+              //     await migratePartyDataToBuildingSolution(uid);
+              //   },
+              //   child: const Text('Migrate Firestore Data'),
+              // ),
+            ],
           ),
-          // ElevatedButton(
-          //   onPressed: () async {
-          //     final uid = FirebaseAuth.instance.currentUser!.uid;
-          //     await migratePartyDataToBuildingSolution(uid);
-          //   },
-          //   child: const Text('Migrate Firestore Data'),
-          // ),
-        ],
-      ),
-      floatingActionButton: floatingActionButton(
-        partyNameController: partyNameController,
-        partyDescController: partyDescController,
-        partyModel: partyModel,
-        partyScrollController: _scrollController,
-      ),
+          floatingActionButton: floatingActionButton(
+            partyNameController: partyNameController,
+            partyDescController: partyDescController,
+            partyModel: partyModel,
+            partyScrollController: _scrollController,
+          ),
+        );
+      },
     );
   }
 }

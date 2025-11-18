@@ -151,60 +151,69 @@ class _ProjectScreenState extends State<ProjectScreen> {
         if (didPop) return;
         pageTransition(context, const PartyScreen());
       },
-      child: Scaffold(
-        appBar: appBarWidget(
-          onClose: () {
-            _searchController.clear();
-            FocusScope.of(context).unfocus();
-            setState(() => _searchTerm = '');
-            _resetPaging();
-            _initStream();
-          },
-          searchEditingController: _searchController,
-          leadingPress: () {
-            pageTransition(
-              context,
-              ProjectRecycleBinScreen(partyName: widget.partyName),
+      child: StreamBuilder<QuerySnapshot>(
+        stream: _firstPageStream,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return errorWidget(context);
+          }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return loadingWidget(context);
+          }
+
+          final firstPageDocs = snapshot.data?.docs ?? [];
+          final combined = {
+            for (var doc in [...firstPageDocs, ..._extraItems])
+              if ((doc.data() as Map<String, dynamic>)['project_deleted'] ==
+                  'no')
+                doc.id: doc,
+          }.values.toList();
+
+          projectModel = combined
+              .map(
+                (doc) =>
+                    ProjectModel.fromMap(doc.data() as Map<String, dynamic>)
+                      ..projectName = doc.id,
+              )
+              .toList();
+
+          print('pasrty------${projectModel.length}');
+
+          _hasMore = firstPageDocs.length == _pageSize;
+
+          if (combined.isEmpty) {
+            return NoProjectFound(
+              image: ImageConstant.noProjectImage,
+              title: TextConstant.noAnyProjectYet,
+              subTitle: TextConstant.yourProjectAppearHere,
             );
-          },
-          context: context,
-          title: widget.partyName,
-          color: ColorConstant.greenColor,
-        ),
-        body: Column(
-          children: [
-            const SizedBox(height: 10),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: _firstPageStream,
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return errorWidget(context);
-                  }
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return loadingWidget(context);
-                  }
+          }
 
-                  final firstPageDocs = snapshot.data?.docs ?? [];
-                  final combined = {
-                    for (var doc in [...firstPageDocs, ..._extraItems])
-                      if ((doc.data()
-                              as Map<String, dynamic>)['project_deleted'] ==
-                          'no')
-                        doc.id: doc,
-                  }.values.toList();
-
-                  _hasMore = firstPageDocs.length == _pageSize;
-
-                  if (combined.isEmpty) {
-                    return NoProjectFound(
-                      image: ImageConstant.noProjectImage,
-                      title: TextConstant.noAnyProjectYet,
-                      subTitle: TextConstant.yourProjectAppearHere,
-                    );
-                  }
-
-                  return ListView.builder(
+          return Scaffold(
+            appBar: appBarWidget(
+              onClose: () {
+                _searchController.clear();
+                FocusScope.of(context).unfocus();
+                setState(() => _searchTerm = '');
+                _resetPaging();
+                _initStream();
+              },
+              searchEditingController: _searchController,
+              leadingPress: () {
+                pageTransition(
+                  context,
+                  ProjectRecycleBinScreen(partyName: widget.partyName),
+                );
+              },
+              context: context,
+              title: widget.partyName,
+              color: ColorConstant.greenColor,
+            ),
+            body: Column(
+              children: [
+                const SizedBox(height: 10),
+                Expanded(
+                  child: ListView.builder(
                     controller: _scrollController,
                     itemCount: combined.length + (_hasMore ? 1 : 0),
                     itemBuilder: (context, index) {
@@ -279,20 +288,19 @@ class _ProjectScreenState extends State<ProjectScreen> {
                         ),
                       );
                     },
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-
-        floatingActionButton: projectFloatingBtn(
-          projectNameController: projectNameController,
-          projectDescController: projectDescController,
-          projectModel: projectModel,
-          partyName: widget.partyName,
-          projectScrollController: _scrollController,
-        ),
+            floatingActionButton: projectFloatingBtn(
+              projectNameController: projectNameController,
+              projectDescController: projectDescController,
+              projectModel: projectModel,
+              partyName: widget.partyName,
+              projectScrollController: _scrollController,
+            ),
+          );
+        },
       ),
     );
   }

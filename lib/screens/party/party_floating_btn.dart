@@ -102,7 +102,7 @@ Widget floatingActionButton({
                                   // 2️⃣ If duplicate found → show error and stop
                                   if (isDuplicate) {
                                     error.setValue(
-                                      TextConstant.partyNameAlreadyExist,
+                                      '${TextConstant.partyName} ${TextConstant.alreadyExist}',
                                     );
                                     return;
                                   }

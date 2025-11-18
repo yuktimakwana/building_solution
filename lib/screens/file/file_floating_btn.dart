@@ -20,17 +20,7 @@ Widget fileFloatingBtn({
   required String projectName,
   required ScrollController fileScrollController,
 }) {
-  String fileName = '';
-
   AddFileBloc addFileBloc = AddFileBloc(addFileRepository: AddFileRepository());
-
-  void duplicateFileName() {
-    for (int i = 0; i < fileModel.length; i++) {
-      if (fileNameController.text == fileModel[i].fileName) {
-        fileName = fileModel[i].fileName ?? '';
-      }
-    }
-  }
 
   return Consumer<ErrorValidation>(
     builder: (context, error, child) {
@@ -75,27 +65,49 @@ Widget fileFloatingBtn({
                         title: TextConstant.create,
                         onPressed: changeNotifierEx.isChecked
                             ? () {
-                                duplicateFileName();
-                                if (fileNameController.text
-                                        .toLowerCase()
-                                        .trim() ==
-                                    fileName.toLowerCase().trim()) {
+                                if (fileNameController.text.isEmpty) {
                                   error.setValue(
-                                    '${TextConstant.fileName} ${TextConstant.alreadyExist}',
+                                    TextConstant.folderNameRequired,
                                   );
                                 } else {
-                                  if (!addFileBloc.isClosed) {
-                                    addFileBloc.add(
-                                      NewAddFileEvent(
-                                        fileDeleted: 'no',
-                                        partyName: partyName,
-                                        fileNameLower: fileNameController.text
+                                  final enteredName = fileNameController.text
+                                      .trim()
+                                      .toLowerCase();
+
+                                  final isDuplicate = fileModel.any((
+                                    file,
+                                  ) {
+                                    final existingName =
+                                        (file.fileNameLower ?? "")
                                             .trim()
                                             .replaceAll(RegExp(r'\s+'), '')
-                                            .toLowerCase(),
+                                            .toLowerCase();
+
+                                    final newName = enteredName.replaceAll(
+                                      RegExp(r'\s+'),
+                                      '',
+                                    );
+
+                                    return existingName == newName;
+                                  });
+
+                                  if (isDuplicate) {
+                                    error.setValue(
+                                      '${TextConstant.fileName} ${TextConstant.alreadyExist}',
+                                    );
+                                    return;
+                                  } else {
+                                    addFileBloc.add(
+                                      NewAddFileEvent(
+                                        fileDesc:
+                                            fileDescController.text,
+                                        fileName: fileNameController.text
+                                            .trim(),
+                                        partyName: partyName,
                                         projectName: projectName,
-                                        fileName: fileNameController.text,
-                                        fileDesc: fileDescController.text,
+                                        fileNameLower: enteredName
+                                            .replaceAll(RegExp(r'\s+'), ''),
+                                        fileDeleted: 'no',
                                       ),
                                     );
                                   }
