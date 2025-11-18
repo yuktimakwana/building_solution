@@ -46,40 +46,45 @@ class FirebaseRef {
 /// Copies all documents (and subcollections) from [sourcePath] to [destinationPath]
 
 
-Future<void> copyUserData({
-  required String uid,
-}) async {
+Future<void> migratePartyDataToBuildingSolution(String uid) async {
   final firestore = FirebaseFirestore.instance;
-  final oldRoot = firestore.collection('building_solution').doc(uid);
-  final newRoot = firestore
-      .collection('nwCollection')
-      .doc('abc')
-      .collection('building_solution')
-      .doc(uid);
 
-  print('🚀 Copying data for user: $uid');
+  // Old root
+  final oldRoot = firestore.collection('party');
 
-  final partySnapshot = await oldRoot.collection('party').get();
+  // New root
+  final newRoot = firestore.collection('building_solution').doc(uid);
+
+  print('🚀 Starting migration for UID: $uid');
+
+  // Get all party documents
+  final partySnapshot = await oldRoot.get();
+  if (partySnapshot.docs.isEmpty) {
+    print('⚠️ No party documents found.');
+    return;
+  }
+
   for (final partyDoc in partySnapshot.docs) {
-    await newRoot.collection('party').doc(partyDoc.id).set(partyDoc.data());
-    print('📁 Party: ${partyDoc.id}');
+    final partyData = partyDoc.data();
+    await newRoot.collection('party').doc(partyDoc.id).set(partyData);
+    print('📁 Copied Party: ${partyDoc.id}');
 
-    // Copy projects
-    final projectSnapshot =
-    await partyDoc.reference.collection('project').get();
+    // Copy project subcollection
+    final projectSnapshot = await partyDoc.reference.collection('project').get();
     for (final projectDoc in projectSnapshot.docs) {
+      final projectData = projectDoc.data();
       await newRoot
           .collection('party')
           .doc(partyDoc.id)
           .collection('project')
           .doc(projectDoc.id)
-          .set(projectDoc.data());
-      print('📄 Project: ${projectDoc.id}');
+          .set(projectData);
+      print('📄 Copied Project: ${projectDoc.id}');
 
-      // Copy files
-      final fileSnapshot =
-      await projectDoc.reference.collection('file').get();
+      // Copy file subcollection
+      final fileSnapshot = await projectDoc.reference.collection('file').get();
       for (final fileDoc in fileSnapshot.docs) {
+        final fileData = fileDoc.data();
         await newRoot
             .collection('party')
             .doc(partyDoc.id)
@@ -87,13 +92,14 @@ Future<void> copyUserData({
             .doc(projectDoc.id)
             .collection('file')
             .doc(fileDoc.id)
-            .set(fileDoc.data());
-        print('📦 File: ${fileDoc.id}');
+            .set(fileData);
+        print('📦 Copied File: ${fileDoc.id}');
 
-        // Copy records
-        final recordsSnapshot =
+        // Copy records subcollection
+        final recordSnapshot =
         await fileDoc.reference.collection('records').get();
-        for (final recordDoc in recordsSnapshot.docs) {
+        for (final recordDoc in recordSnapshot.docs) {
+          final recordData = recordDoc.data();
           await newRoot
               .collection('party')
               .doc(partyDoc.id)
@@ -103,11 +109,12 @@ Future<void> copyUserData({
               .doc(fileDoc.id)
               .collection('records')
               .doc(recordDoc.id)
-              .set(recordDoc.data());
+              .set(recordData);
         }
+        print('🧾 Copied all records for File: ${fileDoc.id}');
       }
     }
   }
 
-  print('✅ Migration complete for user: $uid');
+  print('✅ Migration completed successfully for UID: $uid');
 }

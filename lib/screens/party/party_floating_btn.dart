@@ -18,21 +18,14 @@ Widget floatingActionButton({
   required List<PartyModel> partyModel,
   required ScrollController partyScrollController,
 }) {
-  String partyName = '';
   AddPartyBloc partyBloc = AddPartyBloc(
     addPartyRepository: AddPartyRepository(),
   );
 
-  void duplicatePartyName() {
-    for (int i = 0; i < partyModel.length; i++) {
-      if (partyNameController.text == partyModel[i].partyName) {
-        partyName = partyModel[i].partyName ?? '';
-      }
-    }
-  }
-
   return Consumer<ErrorValidation>(
     builder: (context, error, child) {
+      final error = Provider.of<ErrorValidation>(context, listen: false);
+
       return FloatingActionButton(
         onPressed: () {
           error.setValue('');
@@ -64,7 +57,7 @@ Widget floatingActionButton({
                           );
                         }
 
-                        FocusScope.of(context).requestFocus(FocusNode());
+                        FocusScope.of(context).unfocus();
                       }
                     },
                     builder: (context, state) {
@@ -76,24 +69,54 @@ Widget floatingActionButton({
                         title: TextConstant.create,
                         onPressed: changeNotifierEx.isChecked
                             ? () {
-                                duplicatePartyName();
-                                if (partyNameController.text
-                                        .toLowerCase()
-                                        .trim() ==
-                                    partyName.toLowerCase().trim()) {
+                                if (partyNameController.text.isEmpty) {
                                   error.setValue(
-                                    '${TextConstant.partyName} ${TextConstant.alreadyExist}',
+                                    TextConstant.partyNameRequired,
                                   );
                                 } else {
-                                  if (!partyBloc.isClosed) {
+                                  final enteredName = partyNameController.text
+                                      .trim()
+                                      .toLowerCase();
+
+                                  // Debug list
+                                  for (var p in partyModel) {
+                                    print(" - ${p.partyNameLower}");
+                                  }
+
+                                  // 1️⃣ Check duplicate (ignore case, ignore spaces)
+                                  final isDuplicate = partyModel.any((party) {
+                                    final existingName =
+                                        (party.partyNameLower ?? "")
+                                            .trim()
+                                            .replaceAll(RegExp(r'\s+'), '')
+                                            .toLowerCase();
+
+                                    final newName = enteredName.replaceAll(
+                                      RegExp(r'\s+'),
+                                      '',
+                                    );
+
+                                    return existingName == newName;
+                                  });
+
+                                  // 2️⃣ If duplicate found → show error and stop
+                                  if (isDuplicate) {
+                                    error.setValue(
+                                      TextConstant.partyNameAlreadyExist,
+                                    );
+                                    return;
+                                  }
+                                  // 3️⃣ No duplicate → save to Firebase
+                                  else {
                                     partyBloc.add(
                                       NewAddPartyEvent(
                                         partyDesc: partyDescController.text,
-                                        partyName: partyNameController.text,
-                                        partyNameLower: partyNameController.text
-                                            .trim()
-                                            .replaceAll(RegExp(r'\s+'), '')
-                                            .toLowerCase(),
+                                        partyName: partyNameController.text
+                                            .trim(),
+                                        partyNameLower: enteredName.replaceAll(
+                                          RegExp(r'\s+'),
+                                          '',
+                                        ),
                                         partyDeleted: 'no',
                                       ),
                                     );

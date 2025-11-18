@@ -182,6 +182,15 @@ class _PartyScreenState extends State<PartyScreen> {
 
                 _hasMore = firstPageDocs.length == _pageSize;
 
+                partyModel = combined.map(
+                      (doc) =>
+                          PartyModel.fromMap(doc.data() as Map<String, dynamic>)
+                            ..partyName = doc.id,
+                    )
+                    .toList();
+
+                print('party Length-----------${partyModel.length}');
+
                 if (combined.isEmpty) {
                   return NoProjectFound(
                     image: ImageConstant.noPartyImage,
@@ -266,14 +275,13 @@ class _PartyScreenState extends State<PartyScreen> {
               },
             ),
           ),
-
-          ElevatedButton(
-            onPressed: () async {
-              final uid = FirebaseAuth.instance.currentUser!.uid;
-              await copyUserData(uid: uid);
-            },
-            child: const Text('Migrate Firestore Data'),
-          )
+          // ElevatedButton(
+          //   onPressed: () async {
+          //     final uid = FirebaseAuth.instance.currentUser!.uid;
+          //     await migratePartyDataToBuildingSolution(uid);
+          //   },
+          //   child: const Text('Migrate Firestore Data'),
+          // ),
         ],
       ),
       floatingActionButton: floatingActionButton(
