@@ -144,7 +144,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   Future<void> _onNext(RecordsNextPressed e, Emitter<RecordsState> emit) async {
     emit(state.copyWith(loading: true, error: null));
     try {
-
       // Parse values safely
       num feet =
           num.tryParse(state.feet.trim().isEmpty ? '0' : state.feet.trim()) ??
@@ -261,6 +260,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   @override
   Future<void> close() {
     _sub?.cancel();
+    repo.dispose();
     return super.close();
   }
 }

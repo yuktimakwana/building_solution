@@ -4,6 +4,7 @@ import 'package:duplicate_building_solution/firebase_options.dart';
 import 'package:duplicate_building_solution/screens/party/party_screen.dart';
 import 'package:duplicate_building_solution/screens/splash_screen.dart';
 import 'package:duplicate_building_solution/theme/theme_constant.dart';
+import 'package:duplicate_building_solution/offline/offline_sync_service.dart';
 import 'package:duplicate_building_solution/utils/change_notifier_ex.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -17,6 +18,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FirebaseRef.init();
+  await OfflineSyncService.instance.initialize();
   runApp(const MyApp());
 }
 

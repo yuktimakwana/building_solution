@@ -8,6 +8,8 @@ import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/image_constant.dart';
 import 'package:duplicate_building_solution/utils/text_constant.dart';
 import 'package:duplicate_building_solution/widgets/custom_toast.dart';
+import 'package:duplicate_building_solution/screens/file/file_screen.dart';
+import 'package:duplicate_building_solution/utils/functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
@@ -43,7 +45,7 @@ Widget projectFloatingBtn({
                   return BlocConsumer<AddProjectBloc, AddProjectState>(
                     listener: (context, state) {
                       if (state is AddProjectComplete) {
-                        Navigator.pop(context);
+                        Navigator.of(context, rootNavigator: true).pop();
                         projectNameController.text = '';
                         projectDescController.text = '';
                         changeNotifierEx.isChecked = false;

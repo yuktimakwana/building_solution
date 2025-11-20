@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:duplicate_building_solution/offline/offline_sync_service.dart';
 import 'package:duplicate_building_solution/dialog/delete_dialog.dart';
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
@@ -25,40 +27,59 @@ class _ProjectRecycleBinScreenState extends State<ProjectRecycleBinScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  Stream<QuerySnapshot>? _firstPageStream;
-  final List<DocumentSnapshot> _items = [];
-  DocumentSnapshot? _lastDocument;
+  final OfflineSyncService _syncService = OfflineSyncService.instance;
+  late final Stream<List<Map<String, dynamic>>> _cachedProjectsStream =
+      _syncService.watchCachedProjects();
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _onlineSubscription;
 
-  late CollectionReference fireAuth;
+  late CollectionReference<Map<String, dynamic>> fireAuth;
 
   bool _isLoadingMore = false;
   bool _hasMore = true;
   static const int _pageSize = 10;
   String _searchTerm = '';
+  DocumentSnapshot? _lastDocument;
 
   @override
   void initState() {
     super.initState();
-    fireAuth = FirebaseRef.partyUserDoc.doc(widget.partyName).collection('project');
+    fireAuth = FirebaseRef.partyUserDoc
+        .doc(widget.partyName)
+        .collection('project');
     _initStream();
     _scrollController.addListener(_onScroll);
     _searchController.addListener(() {
       setState(() {
         _searchTerm = _searchController.text.trim().toLowerCase();
       });
-      _resetPaging();
       _initStream();
     });
   }
 
-  void _resetPaging() {
-    _items.clear();
+  void _initStream() {
+    _onlineSubscription?.cancel();
     _lastDocument = null;
     _hasMore = true;
+
+    final query = _buildBaseQuery();
+    _onlineSubscription = query.snapshots().listen((snapshot) async {
+      await _syncService.cacheSnapshotBatch(
+        table: 'projects',
+        snapshot: snapshot,
+        idBuilder: (doc) => '${widget.partyName}::${doc.id}',
+      );
+      if (snapshot.docs.isNotEmpty) {
+        _lastDocument = snapshot.docs.last;
+        _hasMore = snapshot.docs.length == _pageSize;
+      } else {
+        _hasMore = false;
+      }
+      if (mounted) setState(() {});
+    }, onError: (err) => debugPrint('Project Recycle Bin stream error: $err'));
   }
 
-  void _initStream() async {
-    Query baseQuery = fireAuth
+  Query<Map<String, dynamic>> _buildBaseQuery() {
+    Query<Map<String, dynamic>> baseQuery = fireAuth
         .where('project_deleted', isEqualTo: 'yes')
         .orderBy('project_add_on', descending: true)
         .limit(_pageSize);
@@ -71,29 +92,14 @@ class _ProjectRecycleBinScreenState extends State<ProjectRecycleBinScreen> {
             isLessThanOrEqualTo: '$_searchTerm\uf8ff',
           );
     }
-
-    setState(() {
-      _firstPageStream = baseQuery.snapshots();
-    });
+    return baseQuery;
   }
 
   Future<void> _loadMore() async {
     if (_isLoadingMore || !_hasMore) return;
     _isLoadingMore = true;
     try {
-      Query q = fireAuth
-          .where('project_deleted', isEqualTo: 'yes')
-          .orderBy('project_add_on', descending: true)
-          .limit(_pageSize);
-
-      if (_searchTerm.isNotEmpty) {
-        q = q
-            .where('project_name_lower', isGreaterThanOrEqualTo: _searchTerm)
-            .where(
-              'project_name_lower',
-              isLessThanOrEqualTo: '$_searchTerm\uf8ff',
-            );
-      }
+      Query<Map<String, dynamic>> q = _buildBaseQuery();
 
       if (_lastDocument != null) {
         q = q.startAfterDocument(_lastDocument!);
@@ -101,13 +107,17 @@ class _ProjectRecycleBinScreenState extends State<ProjectRecycleBinScreen> {
 
       final snap = await q.get();
       if (snap.docs.isNotEmpty) {
-        _items.addAll(snap.docs);
         _lastDocument = snap.docs.last;
         if (snap.docs.length < _pageSize) _hasMore = false;
+        await _syncService.cacheSnapshotBatch(
+          table: 'projects',
+          snapshot: snap,
+          idBuilder: (doc) => '${widget.partyName}::${doc.id}',
+        );
       } else {
         _hasMore = false;
       }
-      setState(() {});
+      if (mounted) setState(() {});
     } catch (e) {
       debugPrint('Load more error: $e');
     } finally {
@@ -115,32 +125,51 @@ class _ProjectRecycleBinScreenState extends State<ProjectRecycleBinScreen> {
     }
   }
 
-  void deletePermanent(String projectName) {
+  void _confirmPermanentDelete(String projectName) {
     deleteDialog(
       deleteButtonText: TextConstant.delete,
       context: context,
       title: TextConstant.permanentDeleteProject,
-      onPressed: () {
+      onPressed: () async {
         Navigator.pop(context);
-
-        fireAuth.doc(projectName).delete();
+        try {
+          await _syncService.deleteProjectPermanently(
+            partyName: widget.partyName,
+            projectName: projectName,
+          );
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$projectName deleted permanently.')),
+          );
+        } catch (err) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete $projectName: $err')),
+          );
+        }
       },
     );
   }
 
   void _onScroll() {
+    if (!_syncService.isOnline) return;
     if (_scrollController.position.pixels >=
         (_scrollController.position.maxScrollExtent - 200)) {
       _loadMore();
     }
   }
 
-  Future<void> _restoreFromRecycleBin(DocumentSnapshot doc) async {
-    await fireAuth.doc(doc.id).update({'project_deleted': 'no'});
+  Future<void> _restoreFromRecycleBin(String projectName) async {
+    await _syncService.markProjectDeleted(
+      partyName: widget.partyName,
+      projectName: projectName,
+      deleted: false,
+    );
   }
 
   @override
   void dispose() {
+    _onlineSubscription?.cancel();
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -158,7 +187,6 @@ class _ProjectRecycleBinScreenState extends State<ProjectRecycleBinScreen> {
           setState(() {
             _searchTerm = '';
           });
-          _resetPaging();
           _initStream();
         },
         backPress: () {
@@ -170,27 +198,20 @@ class _ProjectRecycleBinScreenState extends State<ProjectRecycleBinScreen> {
         title: TextConstant.recycleBin,
         color: ColorConstant.greenColor,
       ),
-      body: StreamBuilder(
-        stream: _firstPageStream,
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: _cachedProjectsStream,
+        initialData: const [],
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return errorWidget(context);
           }
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (!snapshot.hasData) {
             return loadingWidget(context);
           }
 
-          final docs = snapshot.data?.docs ?? [];
-          final combined = {
-            for (var doc in [...docs, ..._items])
-              if ((doc.data() as Map<String, dynamic>)['project_deleted'] ==
-                  'yes')
-                doc.id: doc,
-          }.values.toList();
+          final docs = _filterAndSort(snapshot.data!);
 
-          _hasMore = docs.length == _pageSize;
-
-          if (combined.isEmpty) {
+          if (docs.isEmpty) {
             return NoProjectFound(
               image: ImageConstant.noProjectImage,
               title: TextConstant.noDeleteAnyProject,
@@ -200,9 +221,10 @@ class _ProjectRecycleBinScreenState extends State<ProjectRecycleBinScreen> {
 
           return ListView.builder(
             controller: _scrollController,
-            itemCount: combined.length + (_hasMore ? 1 : 0),
+            itemCount:
+                docs.length + ((_hasMore && _syncService.isOnline) ? 1 : 0),
             itemBuilder: (context, index) {
-              if (index == combined.length) {
+              if (_hasMore && _syncService.isOnline && index == docs.length) {
                 if (_isLoadingMore) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 20),
@@ -213,8 +235,7 @@ class _ProjectRecycleBinScreenState extends State<ProjectRecycleBinScreen> {
                 }
               }
 
-              final doc = combined[index];
-              final data = doc.data() as Map<String, dynamic>;
+              final data = docs[index];
               final projectName = data['project_name'] ?? '';
 
               return Padding(
@@ -237,7 +258,7 @@ class _ProjectRecycleBinScreenState extends State<ProjectRecycleBinScreen> {
                       children: [
                         IconButton(
                           onPressed: () {
-                            deletePermanent(projectName);
+                            _confirmPermanentDelete(projectName);
                           },
                           icon: const Icon(
                             Icons.delete,
@@ -246,8 +267,7 @@ class _ProjectRecycleBinScreenState extends State<ProjectRecycleBinScreen> {
                         ),
                         IconButton(
                           onPressed: () {
-                            _restoreFromRecycleBin(doc);
-                            _items.removeWhere((d) => d.id == doc.id);
+                            _restoreFromRecycleBin(projectName);
                           },
                           icon: const Icon(
                             Icons.undo,
@@ -264,5 +284,37 @@ class _ProjectRecycleBinScreenState extends State<ProjectRecycleBinScreen> {
         },
       ),
     );
+  }
+
+  List<Map<String, dynamic>> _filterAndSort(
+    List<Map<String, dynamic>> rawData,
+  ) {
+    final prefix = '${widget.partyName}::';
+    return rawData.where((data) {
+      final entityId = (data['__entity_id'] ?? '') as String;
+      if (!entityId.startsWith(prefix)) return false;
+      final deleted = (data['project_deleted'] ?? 'no') as String;
+      if (deleted != 'yes') return false;
+      if (_searchTerm.isEmpty) return true;
+      final lower = (data['project_name_lower'] ?? '') as String;
+      return lower.contains(_searchTerm);
+    }).toList()..sort((a, b) {
+      final aTime = a['project_add_on'];
+      final bTime = b['project_add_on'];
+      // Handle Timestamp, int, or null
+      int aMillis = 0;
+      int bMillis = 0;
+      if (aTime is Timestamp)
+        aMillis = aTime.millisecondsSinceEpoch;
+      else if (aTime is int)
+        aMillis = aTime;
+
+      if (bTime is Timestamp)
+        bMillis = bTime.millisecondsSinceEpoch;
+      else if (bTime is int)
+        bMillis = bTime;
+
+      return bMillis.compareTo(aMillis);
+    });
   }
 }

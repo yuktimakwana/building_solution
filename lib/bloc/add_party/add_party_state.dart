@@ -5,12 +5,12 @@ abstract class AddPartyState {}
 
 class AddPartyInitial extends AddPartyState {}
 
-class AddPartyLoading extends AddPartyState {}
-
-class AddPartyComplete extends AddPartyState {}
+class AddPartyComplete extends AddPartyState {
+  final PartyModel party;
+  AddPartyComplete({required this.party});
+}
 
 class AddPartyError extends AddPartyState {
   final String errorMessage;
-
   AddPartyError({required this.errorMessage});
 }

@@ -41,7 +41,7 @@ Widget fileFloatingBtn({
                   return BlocConsumer<AddFileBloc, AddFileState>(
                     listener: (context, state) {
                       if (state is AddFileComplete) {
-                        Navigator.pop(context);
+                        Navigator.of(context, rootNavigator: true).pop();
                         fileNameController.text = '';
                         fileDescController.text = '';
                         changeNotifierEx.isChecked = false;
@@ -74,9 +74,7 @@ Widget fileFloatingBtn({
                                       .trim()
                                       .toLowerCase();
 
-                                  final isDuplicate = fileModel.any((
-                                    file,
-                                  ) {
+                                  final isDuplicate = fileModel.any((file) {
                                     final existingName =
                                         (file.fileNameLower ?? "")
                                             .trim()
@@ -99,14 +97,15 @@ Widget fileFloatingBtn({
                                   } else {
                                     addFileBloc.add(
                                       NewAddFileEvent(
-                                        fileDesc:
-                                            fileDescController.text,
+                                        fileDesc: fileDescController.text,
                                         fileName: fileNameController.text
                                             .trim(),
                                         partyName: partyName,
                                         projectName: projectName,
-                                        fileNameLower: enteredName
-                                            .replaceAll(RegExp(r'\s+'), ''),
+                                        fileNameLower: enteredName.replaceAll(
+                                          RegExp(r'\s+'),
+                                          '',
+                                        ),
                                         fileDeleted: 'no',
                                       ),
                                     );

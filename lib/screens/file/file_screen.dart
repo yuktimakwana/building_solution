@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:duplicate_building_solution/dialog/delete_dialog.dart';
 import 'package:duplicate_building_solution/model/file_model.dart';
+import 'package:duplicate_building_solution/offline/offline_status.dart';
+import 'package:duplicate_building_solution/offline/offline_sync_service.dart';
 import 'package:duplicate_building_solution/screens/file/file_floating_btn.dart';
 import 'package:duplicate_building_solution/screens/file/file_recycle_bin.dart';
-import 'package:duplicate_building_solution/screens/project/project_screen.dart';
 import 'package:duplicate_building_solution/screens/table/record_screen.dart';
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
@@ -14,6 +17,7 @@ import 'package:duplicate_building_solution/widgets/default_image.dart';
 import 'package:duplicate_building_solution/widgets/error_widget.dart';
 import 'package:duplicate_building_solution/widgets/loading_widget.dart';
 import 'package:duplicate_building_solution/widgets/no_project_found.dart';
+import 'package:duplicate_building_solution/widgets/sync_status_banner.dart';
 import 'package:flutter/material.dart';
 
 class FileScreen extends StatefulWidget {
@@ -36,10 +40,12 @@ class _FileScreenState extends State<FileScreen> {
   final TextEditingController fileNameController = TextEditingController();
   final TextEditingController fileDescController = TextEditingController();
 
-  Stream<QuerySnapshot>? _firstPageStream;
-  late CollectionReference fireAuth;
-  final List<DocumentSnapshot> _extraItems = [];
-  DocumentSnapshot? _lastDocument;
+  late CollectionReference<Map<String, dynamic>> fireAuth;
+  final OfflineSyncService _syncService = OfflineSyncService.instance;
+  late final Stream<List<Map<String, dynamic>>> _cachedFilesStream =
+      _syncService.watchCachedFiles();
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _onlineSubscription;
+  QueryDocumentSnapshot<Map<String, dynamic>>? _lastDocument;
   bool _isLoadingMore = false;
   bool _hasMore = true;
   static const int _pageSize = 10;
@@ -62,19 +68,34 @@ class _FileScreenState extends State<FileScreen> {
       setState(() {
         _searchTerm = _searchController.text.trim().toLowerCase();
       });
-      _resetPaging();
       _initStream();
     });
   }
 
-  void _resetPaging() {
-    _extraItems.clear();
+  void _initStream() {
+    _onlineSubscription?.cancel();
     _lastDocument = null;
     _hasMore = true;
+    final query = _buildBaseQuery();
+    _onlineSubscription = query.snapshots().listen((snapshot) async {
+      await _syncService.cacheSnapshotBatch(
+        table: 'files',
+        snapshot: snapshot,
+        idBuilder: (doc) =>
+            '${widget.partyName}::${widget.projectName}::${doc.id}',
+      );
+      if (snapshot.docs.isNotEmpty) {
+        _lastDocument = snapshot.docs.last;
+        _hasMore = snapshot.docs.length == _pageSize;
+      } else {
+        _hasMore = false;
+      }
+      if (mounted) setState(() {});
+    }, onError: (err) => debugPrint('File stream error: $err'));
   }
 
-  void _initStream() {
-    Query baseQuery = fireAuth
+  Query<Map<String, dynamic>> _buildBaseQuery() {
+    Query<Map<String, dynamic>> baseQuery = fireAuth
         .where('file_deleted', isEqualTo: 'no')
         .orderBy('file_add_on', descending: true)
         .limit(_pageSize);
@@ -84,10 +105,7 @@ class _FileScreenState extends State<FileScreen> {
           .where('file_name_lower', isGreaterThanOrEqualTo: _searchTerm)
           .where('file_name_lower', isLessThanOrEqualTo: '$_searchTerm\uf8ff');
     }
-
-    setState(() {
-      _firstPageStream = baseQuery.snapshots();
-    });
+    return baseQuery;
   }
 
   Future<void> _loadMore() async {
@@ -95,19 +113,7 @@ class _FileScreenState extends State<FileScreen> {
     _isLoadingMore = true;
 
     try {
-      Query q = fireAuth
-          .where('file_deleted', isEqualTo: 'no')
-          .orderBy('file_add_on', descending: true)
-          .limit(_pageSize);
-
-      if (_searchTerm.isNotEmpty) {
-        q = q
-            .where('file_name_lower', isGreaterThanOrEqualTo: _searchTerm)
-            .where(
-              'file_name_lower',
-              isLessThanOrEqualTo: '$_searchTerm\uf8ff',
-            );
-      }
+      Query<Map<String, dynamic>> q = _buildBaseQuery();
 
       if (_lastDocument != null) {
         q = q.startAfterDocument(_lastDocument!);
@@ -116,13 +122,18 @@ class _FileScreenState extends State<FileScreen> {
       final snap = await q.get();
 
       if (snap.docs.isNotEmpty) {
-        _extraItems.addAll(snap.docs);
         _lastDocument = snap.docs.last;
         if (snap.docs.length < _pageSize) _hasMore = false;
+        await _syncService.cacheSnapshotBatch(
+          table: 'files',
+          snapshot: snap,
+          idBuilder: (doc) =>
+              '${widget.partyName}::${widget.projectName}::${doc.id}',
+        );
       } else {
         _hasMore = false;
       }
-      setState(() {});
+      if (mounted) setState(() {});
     } catch (e) {
       debugPrint('Load more error: $e');
     } finally {
@@ -131,6 +142,7 @@ class _FileScreenState extends State<FileScreen> {
   }
 
   void _onScroll() {
+    if (!_syncService.isOnline) return;
     if (_scrollController.position.pixels >=
         (_scrollController.position.maxScrollExtent - 200)) {
       _loadMore();
@@ -139,6 +151,7 @@ class _FileScreenState extends State<FileScreen> {
 
   @override
   void dispose() {
+    _onlineSubscription?.cancel();
     _scrollController.dispose();
     _searchController.dispose();
     fileNameController.dispose();
@@ -149,46 +162,20 @@ class _FileScreenState extends State<FileScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        pageTransition(context, ProjectScreen(partyName: widget.partyName));
-      },
+      canPop: true,
 
-      child: StreamBuilder<QuerySnapshot>(
-        stream: _firstPageStream,
+      child: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: _cachedFilesStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return errorWidget(context);
           }
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (!snapshot.hasData) {
             return loadingWidget(context);
           }
 
-          final firstPageDocs = snapshot.data?.docs ?? [];
-          final combined = {
-            for (var doc in [...firstPageDocs, ..._extraItems])
-              if ((doc.data() as Map<String, dynamic>)['file_deleted'] == 'no')
-                doc.id: doc,
-          }.values.toList();
-
-          fileModel = combined
-              .map(
-                (doc) =>
-                    FileModel.fromMap(doc.data() as Map<String, dynamic>)
-                      ..fileName = doc.id,
-              )
-              .toList();
-
-          _hasMore = firstPageDocs.length == _pageSize;
-
-          if (combined.isEmpty) {
-            return NoProjectFound(
-              image: ImageConstant.noFileImage,
-              title: TextConstant.noAnyFileYet,
-              subTitle: TextConstant.yourFileAppearHere,
-            );
-          }
+          final entries = _buildFileEntries(snapshot.data!);
+          fileModel = entries.map((entry) => entry.model).toList();
 
           return Scaffold(
             appBar: appBarWidget(
@@ -197,7 +184,6 @@ class _FileScreenState extends State<FileScreen> {
                 _searchController.clear();
                 FocusScope.of(context).unfocus();
                 setState(() => _searchTerm = '');
-                _resetPaging();
                 _initStream();
               },
               leadingPress: () {
@@ -213,92 +199,116 @@ class _FileScreenState extends State<FileScreen> {
               title: widget.projectName,
               color: ColorConstant.greenColor,
             ),
-            body: Column(
-              children: [
-                const SizedBox(height: 10),
-                Expanded(
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    itemCount: combined.length + (_hasMore ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == combined.length) {
-                        if (_isLoadingMore) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 20),
-                            child: loadingWidget(context),
-                          );
-                        } else {
-                          return const SizedBox(height: 30);
-                        }
-                      }
-
-                      final doc = combined[index];
-                      final data = doc.data() as Map<String, dynamic>;
-                      final fileName = data['file_name'] ?? '';
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12.0,
-                          vertical: 4.0,
-                        ),
-                        child: Card(
-                          color: ColorConstant.naturalWhiteColor,
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: ListTile(
-                            horizontalTitleGap: 8,
-                            onTap: () {
-                              pageTransition(
-                                context,
-                                RecordsScreen(
-                                  fileName: fileName,
-                                  projectName: widget.projectName,
-                                  partyName: widget.partyName,
-                                ),
-                              );
-                            },
-                            leading: DefaultImage(
-                              title: ImageConstant.fileImage,
-                            ),
-                            title: Text(fileName),
-                            trailing: IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                color: ColorConstant.pastelRedColor,
-                              ),
-                              onPressed: () async {
-                                deleteDialog(
-                                  deleteButtonText:
-                                      TextConstant.moveToRecycleBin,
-                                  onPressed: () async {
-                                    Navigator.pop(context);
-
-                                    await fireAuth.doc(doc.id).update({
-                                      'file_deleted': 'yes',
-                                    });
-
-                                    _extraItems.removeWhere(
-                                      (d) => d.id == doc.id,
-                                    );
-
-                                    setState(() {});
-                                    FocusScope.of(context).unfocus();
-                                  },
-                                  title: TextConstant.moveFileRecycle,
-                                  context: context,
+            body: entries.isEmpty
+                ? NoProjectFound(
+                    image: ImageConstant.noFileImage,
+                    title: TextConstant.noAnyFileYet,
+                    subTitle: TextConstant.yourFileAppearHere,
+                  )
+                : Column(
+                    children: [
+                      const SyncStatusBanner(),
+                      const SizedBox(height: 10),
+                      Expanded(
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          itemCount:
+                              entries.length +
+                              ((_hasMore && _syncService.isOnline) ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            final shouldShowLoader =
+                                _hasMore && _syncService.isOnline;
+                            if (shouldShowLoader && index == entries.length) {
+                              if (_isLoadingMore) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 20,
+                                  ),
+                                  child: loadingWidget(context),
                                 );
-                              },
-                            ),
-                          ),
+                              } else {
+                                return const SizedBox(height: 30);
+                              }
+                            }
+
+                            final entry = entries[index];
+                            final fileName = entry.model.fileName ?? '';
+                            final syncStatus = entry.status;
+                            final isPending =
+                                syncStatus == SyncStatus.pending ||
+                                syncStatus == SyncStatus.syncing;
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12.0,
+                                vertical: 4.0,
+                              ),
+                              child: Card(
+                                color: ColorConstant.naturalWhiteColor,
+                                elevation: 4,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: ListTile(
+                                  horizontalTitleGap: 8,
+                                  onTap: () {
+                                    pageTransition(
+                                      context,
+                                      RecordsScreen(
+                                        fileName: fileName,
+                                        projectName: widget.projectName,
+                                        partyName: widget.partyName,
+                                      ),
+                                    );
+                                  },
+                                  leading: DefaultImage(
+                                    title: ImageConstant.fileImage,
+                                  ),
+                                  title: Text(fileName),
+                                  subtitle: isPending
+                                      ? Text(
+                                          'Pending sync',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: ColorConstant
+                                                    .pastelRedColor,
+                                              ),
+                                        )
+                                      : null,
+                                  trailing: IconButton(
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: ColorConstant.pastelRedColor,
+                                    ),
+                                    onPressed: () async {
+                                      deleteDialog(
+                                        deleteButtonText:
+                                            TextConstant.moveToRecycleBin,
+                                        onPressed: () async {
+                                          Navigator.pop(context);
+
+                                          await _syncService.markFileDeleted(
+                                            partyName: widget.partyName,
+                                            projectName: widget.projectName,
+                                            fileName: fileName,
+                                            deleted: true,
+                                          );
+                                        },
+                                        title: TextConstant.moveFileRecycle,
+                                        context: context,
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
             floatingActionButton: fileFloatingBtn(
               fileNameController: fileNameController,
               fileDescController: fileDescController,
@@ -311,5 +321,60 @@ class _FileScreenState extends State<FileScreen> {
         },
       ),
     );
+  }
+
+  List<({FileModel model, SyncStatus status})> _buildFileEntries(
+    List<Map<String, dynamic>> rawData,
+  ) {
+    final prefix = '${widget.partyName}::${widget.projectName}::';
+    final filtered =
+        rawData.where((data) {
+          final entityId = (data['__entity_id'] ?? '') as String;
+          if (!entityId.startsWith(prefix)) return false;
+          final deleted = (data['file_deleted'] ?? 'no') as String;
+          if (deleted == 'yes') return false;
+          if (_searchTerm.isEmpty) return true;
+          final lower = (data['file_name_lower'] ?? '') as String;
+          return lower.startsWith(_searchTerm);
+        }).toList()..sort(
+          (a, b) => _extractMillis(
+            b['file_add_on'],
+          ).compareTo(_extractMillis(a['file_add_on'])),
+        );
+
+    return filtered
+        .map(
+          (data) => (
+            model: _mapToFileModel(data),
+            status: SyncStatusX.fromValue(
+              data['__sync_status'] as String? ?? SyncStatus.synced.value,
+            ),
+          ),
+        )
+        .toList();
+  }
+
+  FileModel _mapToFileModel(Map<String, dynamic> raw) {
+    final cleaned = _cleanData(raw);
+    final model = FileModel.fromMap(cleaned);
+    final entityId = (raw['__entity_id'] ?? '') as String;
+    final fallbackName = entityId.contains('::')
+        ? entityId.split('::').last
+        : entityId;
+    model.fileName = cleaned['file_name'] ?? fallbackName;
+    return model;
+  }
+
+  Map<String, dynamic> _cleanData(Map<String, dynamic> raw) {
+    final cleaned = Map<String, dynamic>.from(raw);
+    cleaned.removeWhere((key, _) => key.toString().startsWith('__'));
+    return cleaned;
+  }
+
+  int _extractMillis(dynamic value) {
+    if (value is Timestamp) return value.millisecondsSinceEpoch;
+    if (value is DateTime) return value.millisecondsSinceEpoch;
+    if (value is int) return value;
+    return 0;
   }
 }

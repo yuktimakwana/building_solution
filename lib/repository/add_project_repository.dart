@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:duplicate_building_solution/utils/functions.dart';
-import 'package:duplicate_building_solution/utils/text_constant.dart';
+import 'package:duplicate_building_solution/offline/offline_sync_service.dart';
 import 'package:flutter/foundation.dart';
 
 class AddProjectRepository {
+  final OfflineSyncService _syncService = OfflineSyncService.instance;
+
   Future<void> addProject({
     required String projectName,
     required String partyName,
@@ -12,11 +13,6 @@ class AddProjectRepository {
     required String projectNameLower,
   }) async {
     try {
-      final fireCloud = FirebaseRef.partyUserDoc
-          .doc(partyName)
-          .collection(TextConstant.projectCollection)
-          .doc(projectName);
-
       final body = {
         'project_name': projectName,
         'project_name_lower': projectNameLower,
@@ -25,7 +21,11 @@ class AddProjectRepository {
         'project_add_on': Timestamp.now(),
       };
 
-      await fireCloud.set(body);
+      await _syncService.upsertProject(
+        partyName: partyName,
+        projectName: projectName,
+        data: body,
+      );
     } on FirebaseException catch (e) {
       if (kDebugMode) {
         print("Failed with error '${e.code}' : ${e.message}");

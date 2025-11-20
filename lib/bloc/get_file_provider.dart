@@ -7,13 +7,14 @@ class GetFileProvider {
   String partyName, projectName;
   bool isRecycleBinScreen;
 
-  GetFileProvider(
-      {required this.partyName,
-      required this.projectName,
-      required this.isRecycleBinScreen});
+  GetFileProvider({
+    required this.partyName,
+    required this.projectName,
+    required this.isRecycleBinScreen,
+  });
 
-  final CollectionReference fileCollectionReference =
-      FirebaseFirestore.instance.collection(TextConstant.partyCollection);
+  final CollectionReference fileCollectionReference = FirebaseFirestore.instance
+      .collection(TextConstant.partyCollection);
 
   final StreamController<List<FileModel>> fileController =
       StreamController<List<FileModel>>.broadcast();
@@ -48,35 +49,34 @@ class GetFileProvider {
 
     var currentRequestIndex = allPagedResults.length;
 
-    pageChatQuery.snapshots().listen(
-      (snapshot) {
-        if (snapshot.docs.isNotEmpty) {
-          var generalChats = snapshot.docs
-              .map((snapshot) =>
-                  FileModel.fromMap(snapshot.data()))
-              .toList();
+    pageChatQuery.snapshots().listen((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        var generalChats = snapshot.docs
+            .map((snapshot) => FileModel.fromMap(snapshot.data()))
+            .toList();
 
-          var pageExists = currentRequestIndex < allPagedResults.length;
+        var pageExists = currentRequestIndex < allPagedResults.length;
 
-          if (pageExists) {
-            allPagedResults[currentRequestIndex] = generalChats;
-          } else {
-            allPagedResults.add(generalChats);
-          }
-
-          var allChats = allPagedResults.fold<List<FileModel>>(<FileModel>[],
-              (initialValue, pageItems) => initialValue..addAll(pageItems));
-
-          fileController.add(allChats);
-
-          if (currentRequestIndex == allPagedResults.length - 1) {
-            _lastDocument = snapshot.docs.last;
-          }
-
-          hasMoreData = generalChats.length == chatLimit;
+        if (pageExists) {
+          allPagedResults[currentRequestIndex] = generalChats;
+        } else {
+          allPagedResults.add(generalChats);
         }
-      },
-    );
+
+        var allChats = allPagedResults.fold<List<FileModel>>(
+          <FileModel>[],
+          (initialValue, pageItems) => initialValue..addAll(pageItems),
+        );
+
+        fileController.add(allChats);
+
+        if (currentRequestIndex == allPagedResults.length - 1) {
+          _lastDocument = snapshot.docs.last;
+        }
+
+        hasMoreData = generalChats.length == chatLimit;
+      }
+    });
   }
 
   void requestMoreData() => _requestChats();

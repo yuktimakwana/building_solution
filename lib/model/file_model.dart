@@ -6,7 +6,7 @@ class FileModel {
   String? fileDesc;
   Timestamp? fileAddOn;
 
-  FileModel({this.fileName, this.fileAddOn, this.fileDesc,this.fileNameLower});
+  FileModel({this.fileName, this.fileAddOn, this.fileDesc, this.fileNameLower});
 
   Map<String, dynamic> toMap() {
     return {

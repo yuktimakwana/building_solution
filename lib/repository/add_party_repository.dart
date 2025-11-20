@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:duplicate_building_solution/utils/functions.dart';
+import 'package:duplicate_building_solution/offline/offline_sync_service.dart';
 import 'package:flutter/foundation.dart';
 
 class AddPartyRepository {
+  final OfflineSyncService _syncService = OfflineSyncService.instance;
+
   Future<void> addParty({
     required String partyName,
     required String partyNameLower,
@@ -10,8 +12,6 @@ class AddPartyRepository {
     required String partyDeleted,
   }) async {
     try {
-      final fireCloud = FirebaseRef.partyUserDoc.doc(partyName);
-
       final body = {
         'party_name': partyName,
         'party_name_lower': partyNameLower,
@@ -19,7 +19,7 @@ class AddPartyRepository {
         'party_deleted': partyDeleted,
         'party_add_on': Timestamp.now(),
       };
-      await fireCloud.set(body);
+      await _syncService.upsertParty(partyName: partyName, data: body);
     } on FirebaseException catch (e) {
       if (kDebugMode) {
         print("Failed with error '${e.code}' : ${e.message}");

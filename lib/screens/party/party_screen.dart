@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:duplicate_building_solution/dialog/delete_dialog.dart';
 import 'package:duplicate_building_solution/model/party_model.dart';
+import 'package:duplicate_building_solution/offline/offline_status.dart';
+import 'package:duplicate_building_solution/offline/offline_sync_service.dart';
 import 'package:duplicate_building_solution/screens/party/party_floating_btn.dart';
 import 'package:duplicate_building_solution/screens/party/party_recycle_bin.dart';
 import 'package:duplicate_building_solution/screens/project/project_screen.dart';
@@ -13,7 +17,9 @@ import 'package:duplicate_building_solution/widgets/default_image.dart';
 import 'package:duplicate_building_solution/widgets/error_widget.dart';
 import 'package:duplicate_building_solution/widgets/loading_widget.dart';
 import 'package:duplicate_building_solution/widgets/no_project_found.dart';
+import 'package:duplicate_building_solution/widgets/sync_status_banner.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class PartyScreen extends StatefulWidget {
   const PartyScreen({super.key});
@@ -29,9 +35,10 @@ class _PartyScreenState extends State<PartyScreen> {
   final TextEditingController partyNameController = TextEditingController();
   final TextEditingController partyDescController = TextEditingController();
 
-  Stream<QuerySnapshot>? _firstPageStream;
-  final List<DocumentSnapshot> _extraItems = [];
-  DocumentSnapshot? _lastDocument;
+  final OfflineSyncService _syncService = OfflineSyncService.instance;
+  late final Stream<List<Map<String, dynamic>>> _cachedPartiesStream;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _onlineSubscription;
+  QueryDocumentSnapshot<Map<String, dynamic>>? _lastDocument;
   bool _isLoadingMore = false;
   bool _hasMore = true;
   static const int _pageSize = 10;
@@ -43,7 +50,7 @@ class _PartyScreenState extends State<PartyScreen> {
   void initState() {
     super.initState();
     FirebaseRef.init();
-
+    _cachedPartiesStream = _syncService.watchCachedParties();
     _initStream();
     _scrollController.addListener(_onScroll);
 
@@ -51,19 +58,35 @@ class _PartyScreenState extends State<PartyScreen> {
       setState(() {
         _searchTerm = _searchController.text.trim().toLowerCase();
       });
-      _resetPaging();
       _initStream();
     });
   }
 
-  void _resetPaging() {
-    _extraItems.clear();
+  void _initStream() {
+    _onlineSubscription?.cancel();
     _lastDocument = null;
     _hasMore = true;
+    final query = _buildBaseQuery();
+    _onlineSubscription = query.snapshots().listen((snapshot) async {
+      await _syncService.cacheSnapshotBatch(
+        table: 'parties',
+        snapshot: snapshot,
+        idBuilder: (doc) => doc.id,
+      );
+      if (snapshot.docs.isNotEmpty) {
+        _lastDocument = snapshot.docs.last;
+        _hasMore = snapshot.docs.length == _pageSize;
+      } else {
+        _hasMore = false;
+      }
+      if (mounted) {
+        setState(() {});
+      }
+    }, onError: (err) => debugPrint('Party stream error: $err'));
   }
 
-  void _initStream() {
-    Query baseQuery = FirebaseRef.partyUserDoc
+  Query<Map<String, dynamic>> _buildBaseQuery() {
+    Query<Map<String, dynamic>> baseQuery = FirebaseRef.partyUserDoc
         .where('party_deleted', isEqualTo: 'no')
         .orderBy('party_add_on', descending: true)
         .limit(_pageSize);
@@ -73,10 +96,7 @@ class _PartyScreenState extends State<PartyScreen> {
           .where('party_name_lower', isGreaterThanOrEqualTo: _searchTerm)
           .where('party_name_lower', isLessThanOrEqualTo: '$_searchTerm\uf8ff');
     }
-
-    setState(() {
-      _firstPageStream = baseQuery.snapshots();
-    });
+    return baseQuery;
   }
 
   Future<void> _loadMore() async {
@@ -84,20 +104,7 @@ class _PartyScreenState extends State<PartyScreen> {
     _isLoadingMore = true;
 
     try {
-      Query q = FirebaseRef.partyUserDoc
-          .where('party_deleted', isEqualTo: 'no')
-          .orderBy('party_add_on', descending: true)
-          .limit(_pageSize);
-
-      if (_searchTerm.isNotEmpty) {
-        q = q
-            .where('party_name_lower', isGreaterThanOrEqualTo: _searchTerm)
-            .where(
-              'party_name_lower',
-              isLessThanOrEqualTo: '$_searchTerm\uf8ff',
-            );
-      }
-
+      Query<Map<String, dynamic>> q = _buildBaseQuery();
       if (_lastDocument != null) {
         q = q.startAfterDocument(_lastDocument!);
       }
@@ -105,16 +112,21 @@ class _PartyScreenState extends State<PartyScreen> {
       final snap = await q.get();
 
       if (snap.docs.isNotEmpty) {
-        _extraItems.addAll(snap.docs);
         _lastDocument = snap.docs.last;
         if (snap.docs.length < _pageSize) _hasMore = false;
+        await _syncService.cacheSnapshotBatch(
+          table: 'parties',
+          snapshot: snap,
+          idBuilder: (doc) => doc.id,
+        );
       } else {
         _hasMore = false;
       }
 
-      debugPrint("Loaded more docs, total now: ${_extraItems.length}");
-      debugPrint("Last doc id: ${_lastDocument?.id}");
-      setState(() {});
+      debugPrint("Loaded more party docs. Last doc id: ${_lastDocument?.id}");
+      if (mounted) {
+        setState(() {});
+      }
     } catch (e) {
       debugPrint('Load more error: $e');
     } finally {
@@ -123,6 +135,7 @@ class _PartyScreenState extends State<PartyScreen> {
   }
 
   void _onScroll() {
+    if (!_syncService.isOnline) return;
     if (_scrollController.position.pixels >=
         (_scrollController.position.maxScrollExtent - 200)) {
       _loadMore();
@@ -131,6 +144,7 @@ class _PartyScreenState extends State<PartyScreen> {
 
   @override
   void dispose() {
+    _onlineSubscription?.cancel();
     _scrollController.dispose();
     _searchController.dispose();
     partyNameController.dispose();
@@ -140,155 +154,205 @@ class _PartyScreenState extends State<PartyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: _firstPageStream,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return errorWidget(context);
-        }
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return loadingWidget(context);
-        }
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (c,_){
+        SystemNavigator.pop();
+      },
+      child: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: _cachedPartiesStream,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return errorWidget(context);
+          }
+          if (!snapshot.hasData) {
+            return loadingWidget(context);
+          }
 
-        final firstPageDocs = snapshot.data?.docs ?? [];
-        final combined = {
-          for (var doc in [...firstPageDocs, ..._extraItems])
-            if ((doc.data() as Map<String, dynamic>)['party_deleted'] == 'no')
-              doc.id: doc,
-        }.values.toList();
+          final entries = _buildPartyEntries(snapshot.data!);
+          partyModel = entries.map((entry) => entry.model).toList();
 
-        partyModel = combined
-            .map(
-              (doc) =>
-                  PartyModel.fromMap(doc.data() as Map<String, dynamic>)
-                    ..partyName = doc.id,
-            )
-            .toList();
+          return Scaffold(
+            appBar: appBarWidget(
+              leadingPress: () {
+                pageTransition(context, const PartyRecycleBin());
+              },
+              searchEditingController: _searchController,
+              onClose: () {
+                _searchController.clear();
+                FocusScope.of(context).unfocus();
+                setState(() => _searchTerm = '');
+                _initStream();
+              },
+              context: context,
+              title: TextConstant.party,
+              color: ColorConstant.greenColor,
+            ),
+            body: entries.isEmpty
+                ? NoProjectFound(
+                    image: ImageConstant.noPartyImage,
+                    title: TextConstant.noAnyPartyYet,
+                    subTitle: TextConstant.yourPartyAppearHere,
+                  )
+                : Column(
+                    children: [
+                      const SyncStatusBanner(),
+                      const SizedBox(height: 10),
+                      Expanded(
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          itemCount:
+                              entries.length +
+                              ((_hasMore && _syncService.isOnline) ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            final shouldShowLoader =
+                                _hasMore && _syncService.isOnline;
+                            if (shouldShowLoader && index == entries.length) {
+                              if (_isLoadingMore) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 20,
+                                  ),
+                                  child: loadingWidget(context),
+                                );
+                              } else {
+                                return const SizedBox(height: 30);
+                              }
+                            }
 
-        _hasMore = firstPageDocs.length == _pageSize;
+                            final entry = entries[index];
+                            final partyName = entry.model.partyName ?? '';
+                            final syncStatus = entry.status;
+                            final isPending =
+                                syncStatus == SyncStatus.pending ||
+                                syncStatus == SyncStatus.syncing;
 
-        print('party------${partyModel.length}');
-
-        if (combined.isEmpty) {
-          return NoProjectFound(
-            image: ImageConstant.noPartyImage,
-            title: TextConstant.noAnyPartyYet,
-            subTitle: TextConstant.yourPartyAppearHere,
-          );
-        }
-
-        return Scaffold(
-          appBar: appBarWidget(
-            leadingPress: () {
-              pageTransition(context, const PartyRecycleBin());
-            },
-            searchEditingController: _searchController,
-            onClose: () {
-              _searchController.clear();
-              FocusScope.of(context).unfocus();
-              setState(() => _searchTerm = '');
-              _resetPaging();
-              _initStream();
-            },
-            context: context,
-            title: TextConstant.party,
-            color: ColorConstant.greenColor,
-          ),
-          body: Column(
-            children: [
-              const SizedBox(height: 10),
-              Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  itemCount: combined.length + (_hasMore ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == combined.length) {
-                      // Show loading only if more data exists and currently fetching
-                      if (_isLoadingMore) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20),
-                          child: loadingWidget(context),
-                        );
-                      } else {
-                        return const SizedBox(height: 30);
-                      }
-                    }
-
-                    final doc = combined[index];
-                    final data = doc.data() as Map<String, dynamic>;
-                    final partyName = data['party_name'] ?? '';
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12.0,
-                        vertical: 4.0,
-                      ),
-                      child: Card(
-                        color: ColorConstant.naturalWhiteColor,
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: ListTile(
-                          horizontalTitleGap: 6,
-                          onTap: () {
-                            pageTransition(
-                              context,
-                              ProjectScreen(partyName: partyName),
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12.0,
+                                vertical: 4.0,
+                              ),
+                              child: Card(
+                                color: ColorConstant.naturalWhiteColor,
+                                elevation: 4,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: ListTile(
+                                  horizontalTitleGap: 6,
+                                  onTap: () {
+                                    pageTransition(
+                                      context,
+                                      ProjectScreen(partyName: partyName),
+                                    );
+                                  },
+                                  leading: DefaultImage(
+                                    title: ImageConstant.partyImage,
+                                  ),
+                                  title: Text(partyName),
+                                  subtitle: isPending
+                                      ? Text(
+                                          'Pending sync',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color:
+                                                    ColorConstant.pastelRedColor,
+                                              ),
+                                        )
+                                      : null,
+                                  trailing: IconButton(
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: ColorConstant.pastelRedColor,
+                                    ),
+                                    onPressed: () async {
+                                      deleteDialog(
+                                        deleteButtonText:
+                                            TextConstant.moveToRecycleBin,
+                                        onPressed: () async {
+                                          Navigator.pop(context);
+                                          await _syncService.markPartyDeleted(
+                                            partyName: partyName,
+                                            deleted: true,
+                                          );
+                                        },
+                                        title: TextConstant.movePartyRecycle,
+                                        context: context,
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
                             );
                           },
-                          leading: DefaultImage(
-                            title: ImageConstant.partyImage,
-                          ),
-                          title: Text(partyName),
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons.delete,
-                              color: ColorConstant.pastelRedColor,
-                            ),
-                            onPressed: () async {
-                              deleteDialog(
-                                deleteButtonText: TextConstant.moveToRecycleBin,
-                                onPressed: () async {
-                                  Navigator.pop(context);
-                                  await FirebaseRef.partyUserDoc
-                                      .doc(doc.id)
-                                      .update({'party_deleted': 'yes'});
-                                  _extraItems.removeWhere(
-                                    (d) => d.id == doc.id,
-                                  );
-
-                                  setState(() {});
-                                  // FocusScope.of(context).unfocus();
-                                },
-                                title: TextConstant.movePartyRecycle,
-                                context: context,
-                              );
-                            },
-                          ),
                         ),
                       ),
-                    );
-                  },
-                ),
-              ),
-              // ElevatedButton(
-              //   onPressed: () async {
-              //     final uid = FirebaseAuth.instance.currentUser!.uid;
-              //     await migratePartyDataToBuildingSolution(uid);
-              //   },
-              //   child: const Text('Migrate Firestore Data'),
-              // ),
-            ],
-          ),
-          floatingActionButton: floatingActionButton(
-            partyNameController: partyNameController,
-            partyDescController: partyDescController,
-            partyModel: partyModel,
-            partyScrollController: _scrollController,
-          ),
-        );
-      },
+                    ],
+                  ),
+            floatingActionButton: floatingActionButton(
+              partyNameController: partyNameController,
+              partyDescController: partyDescController,
+              partyModel: partyModel,
+              partyScrollController: _scrollController,
+            ),
+          );
+        },
+      ),
     );
+  }
+
+  List<({PartyModel model, SyncStatus status, Map<String, dynamic> raw})>
+  _buildPartyEntries(List<Map<String, dynamic>> rawData) {
+    final filtered =
+        rawData.where((data) {
+          final deleted = (data['party_deleted'] ?? 'no') as String;
+          if (deleted == 'yes') return false;
+          if (_searchTerm.isEmpty) return true;
+          final nameLower = (data['party_name_lower'] ?? '') as String;
+          return nameLower.startsWith(_searchTerm);
+        }).toList()..sort(
+          (a, b) => _extractMillis(
+            b['party_add_on'],
+          ).compareTo(_extractMillis(a['party_add_on'])),
+        );
+
+    return filtered
+        .map(
+          (data) => (
+            model: _mapToPartyModel(data),
+            status: SyncStatusX.fromValue(
+              data['__sync_status'] as String? ?? SyncStatus.synced.value,
+            ),
+            raw: data,
+          ),
+        )
+        .toList();
+  }
+
+  PartyModel _mapToPartyModel(Map<String, dynamic> raw) {
+    final cleaned = _cleanData(raw);
+    final model = PartyModel.fromMap(cleaned);
+    model.partyName = cleaned['party_name'] ?? raw['__entity_id'] as String?;
+    model.partyDeleted = cleaned['party_deleted'];
+    return model;
+  }
+
+  Map<String, dynamic> _cleanData(Map<String, dynamic> raw) {
+    final cleaned = Map<String, dynamic>.from(raw);
+    cleaned.removeWhere((key, _) => key.toString().startsWith('__'));
+    return cleaned;
+  }
+
+  int _extractMillis(dynamic value) {
+    if (value is Timestamp) {
+      return value.millisecondsSinceEpoch;
+    } else if (value is DateTime) {
+      return value.millisecondsSinceEpoch;
+    } else if (value is int) {
+      return value;
+    }
+    return 0;
   }
 }

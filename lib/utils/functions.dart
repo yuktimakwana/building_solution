@@ -28,7 +28,7 @@ void pageTransition(BuildContext context, Widget child) {
 class FirebaseRef {
   static const String collectionName = 'party';
   static late String uid;
-  static late CollectionReference partyUserDoc;
+  static late CollectionReference<Map<String, dynamic>> partyUserDoc;
 
   static Future<void> init() async {
     final user = FirebaseAuth.instance.currentUser;

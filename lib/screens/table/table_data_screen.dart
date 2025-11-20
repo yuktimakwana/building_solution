@@ -1,4 +1,5 @@
 import 'package:duplicate_building_solution/bloc/add_table_data/record_bloc.dart';
+import 'package:duplicate_building_solution/offline/connectivity_notifier.dart';
 import 'package:duplicate_building_solution/screens/table/component/green_btn.dart';
 import 'package:duplicate_building_solution/screens/table/component/grey_bar_btn.dart';
 import 'package:duplicate_building_solution/screens/table/component/labeled_field.dart';
@@ -79,6 +80,7 @@ class _TableDataScreenState extends State<TableDataScreen> {
   @override
   Widget build(BuildContext context) {
     final bloc = context.read<RecordsBloc>();
+    final connectivity = ConnectivityNotifier.instance;
     return BlocConsumer<RecordsBloc, RecordsState>(
       listenWhen: (p, c) {
         return p.note != c.note ||
@@ -109,7 +111,7 @@ class _TableDataScreenState extends State<TableDataScreen> {
         final hasData = state.hasData;
 
         final theme = Theme.of(context);
-        final green = const Color(0xFF8BC34A);
+        final green = ColorConstant.greenColor;
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -129,31 +131,36 @@ class _TableDataScreenState extends State<TableDataScreen> {
               style: TextStyle(color: ColorConstant.naturalWhiteColor),
             ),
             actions: [
-              if (hasData)
-                Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: Center(
-                    child: TextButton(
-                      onPressed: () {
-                        pageTransition(
-                          context,
-                          ViewRecordsScreen(
-                            projectName: widget.projectName,
-                            fileName: widget.fileName,
-                            partyName: widget.partyName,
+              ValueListenableBuilder<bool>(
+                valueListenable: connectivity,
+                builder: (_, isOnline, __) {
+                  if (!hasData || !isOnline) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Center(
+                      child: TextButton(
+                        onPressed: () {
+                          pageTransition(
+                            context,
+                            ViewRecordsScreen(
+                              projectName: widget.projectName,
+                              fileName: widget.fileName,
+                              partyName: widget.partyName,
+                            ),
+                          );
+                        },
+                        child: Text(
+                          TextConstant.view,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: ColorConstant.naturalWhiteColor,
+                            fontWeight: FontWeight.bold,
                           ),
-                        );
-                      },
-                      child: Text(
-                        TextConstant.view,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: ColorConstant.naturalWhiteColor,
-                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                },
+              ),
             ],
             elevation: 0,
           ),
@@ -356,7 +363,7 @@ class _TableDataScreenState extends State<TableDataScreen> {
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
-                          color: ColorConstant.btnGreenColor,
+                          color: ColorConstant.greenColor,
                         ),
                         child: IconButton(
                           onPressed: () => bloc.add(RecordsResetPressed()),

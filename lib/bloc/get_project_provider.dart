@@ -7,11 +7,14 @@ class GetProjectsProvider {
   String partyName;
   bool isRecycleBinScreen;
 
-  GetProjectsProvider(
-      {required this.partyName, required this.isRecycleBinScreen});
+  GetProjectsProvider({
+    required this.partyName,
+    required this.isRecycleBinScreen,
+  });
 
-  final CollectionReference projectCollectionReference =
-      FirebaseFirestore.instance.collection('party');
+  final CollectionReference projectCollectionReference = FirebaseFirestore
+      .instance
+      .collection('party');
 
   final StreamController<List<ProjectModel>> projectController =
       StreamController<List<ProjectModel>>.broadcast();
@@ -44,36 +47,34 @@ class GetProjectsProvider {
 
     var currentRequestIndex = allPagedResults.length;
 
-    pageChatQuery.snapshots().listen(
-      (snapshot) {
-        if (snapshot.docs.isNotEmpty) {
-          var generalChats = snapshot.docs
-              .map((snapshot) =>
-                  ProjectModel.fromMap(snapshot.data()))
-              .toList();
+    pageChatQuery.snapshots().listen((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        var generalChats = snapshot.docs
+            .map((snapshot) => ProjectModel.fromMap(snapshot.data()))
+            .toList();
 
-          var pageExists = currentRequestIndex < allPagedResults.length;
+        var pageExists = currentRequestIndex < allPagedResults.length;
 
-          if (pageExists) {
-            allPagedResults[currentRequestIndex] = generalChats;
-          } else {
-            allPagedResults.add(generalChats);
-          }
-
-          var allChats = allPagedResults.fold<List<ProjectModel>>(
-              <ProjectModel>[],
-              (initialValue, pageItems) => initialValue..addAll(pageItems));
-
-          projectController.add(allChats);
-
-          if (currentRequestIndex == allPagedResults.length - 1) {
-            _lastDocument = snapshot.docs.last;
-          }
-
-          hasMoreData = generalChats.length == chatLimit;
+        if (pageExists) {
+          allPagedResults[currentRequestIndex] = generalChats;
+        } else {
+          allPagedResults.add(generalChats);
         }
-      },
-    );
+
+        var allChats = allPagedResults.fold<List<ProjectModel>>(
+          <ProjectModel>[],
+          (initialValue, pageItems) => initialValue..addAll(pageItems),
+        );
+
+        projectController.add(allChats);
+
+        if (currentRequestIndex == allPagedResults.length - 1) {
+          _lastDocument = snapshot.docs.last;
+        }
+
+        hasMoreData = generalChats.length == chatLimit;
+      }
+    });
   }
 
   void requestMoreData() => _requestChats();

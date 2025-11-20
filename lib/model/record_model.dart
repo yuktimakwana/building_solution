@@ -33,6 +33,13 @@ class RecordModel {
 
   factory RecordModel.fromDoc(QueryDocumentSnapshot doc) {
     final d = doc.data() as Map<String, dynamic>;
+    return RecordModel.fromMapData(d, docId: doc.id);
+  }
+
+  factory RecordModel.fromMapData(
+    Map<String, dynamic> d, {
+    required String docId,
+  }) {
     final num feet = (d['feet'] ?? 0) is int
         ? (d['feet'] ?? 0)
         : (d['feet'] ?? 0.0);
@@ -46,7 +53,7 @@ class RecordModel {
     final num total = d['total'] ?? (qty * rft);
 
     return RecordModel(
-      docId: doc.id,
+      docId: docId,
       idColumn: d['id_column'] ?? 0,
       note: d['note'] ?? '',
       feet: feet,

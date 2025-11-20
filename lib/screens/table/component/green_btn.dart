@@ -12,7 +12,7 @@ class GreenButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: ColorConstant.btnGreenColor,
+        backgroundColor: ColorConstant.greenColor,
         foregroundColor: ColorConstant.naturalWhiteColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         padding: const EdgeInsets.symmetric(vertical: 14),
