@@ -18,6 +18,7 @@ import 'package:duplicate_building_solution/widgets/error_widget.dart';
 import 'package:duplicate_building_solution/widgets/loading_widget.dart';
 import 'package:duplicate_building_solution/widgets/no_project_found.dart';
 import 'package:duplicate_building_solution/widgets/sync_status_banner.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -156,7 +157,7 @@ class _PartyScreenState extends State<PartyScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (c,_){
+      onPopInvokedWithResult: (c, _) {
         SystemNavigator.pop();
       },
       child: StreamBuilder<List<Map<String, dynamic>>>(
@@ -189,11 +190,16 @@ class _PartyScreenState extends State<PartyScreen> {
               color: ColorConstant.greenColor,
             ),
             body: entries.isEmpty
-                ? NoProjectFound(
-                    image: ImageConstant.noPartyImage,
-                    title: TextConstant.noAnyPartyYet,
-                    subTitle: TextConstant.yourPartyAppearHere,
-                  )
+                ? Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    NoProjectFound(
+                        image: ImageConstant.noPartyImage,
+                        title: TextConstant.noAnyPartyYet,
+                        subTitle: TextConstant.yourPartyAppearHere,
+                      ),
+                  ],
+                )
                 : Column(
                     children: [
                       const SyncStatusBanner(),
@@ -257,8 +263,8 @@ class _PartyScreenState extends State<PartyScreen> {
                                               .textTheme
                                               .bodySmall
                                               ?.copyWith(
-                                                color:
-                                                    ColorConstant.pastelRedColor,
+                                                color: ColorConstant
+                                                    .pastelRedColor,
                                               ),
                                         )
                                       : null,
@@ -289,6 +295,7 @@ class _PartyScreenState extends State<PartyScreen> {
                           },
                         ),
                       ),
+
                     ],
                   ),
             floatingActionButton: floatingActionButton(
