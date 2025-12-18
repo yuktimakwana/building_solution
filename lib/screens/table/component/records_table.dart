@@ -22,15 +22,15 @@ class RecordsTable extends StatelessWidget {
 
     return Table(
       border: border,
-      columnWidths: const {
-        0: FixedColumnWidth(36),
-        1: FlexColumnWidth(2),
-        2: FlexColumnWidth(1),
-        3: FlexColumnWidth(1),
-        4: FlexColumnWidth(1),
-        5: FlexColumnWidth(1),
-        6: FlexColumnWidth(1.4),
-      },
+      columnWidths:   {
+        0: const FractionColumnWidth(0.08),
+        1: const FractionColumnWidth(0.33),
+        2: const FractionColumnWidth(0.1),
+        3: const FractionColumnWidth(0.1),
+        4: const FractionColumnWidth(0.15),
+        5: const FractionColumnWidth(0.08),
+        6: const FractionColumnWidth(0.15),
+        },
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       children: [
         TableRow(
@@ -40,7 +40,7 @@ class RecordsTable extends StatelessWidget {
                 (h) => Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 8,
-                    horizontal: 6,
+                    horizontal: 2,
                   ),
                   child: Text(
                     h,
@@ -51,7 +51,7 @@ class RecordsTable extends StatelessWidget {
               )
               .toList(),
         ),
-        ...List.generate(records.length, (i) {
+        ...List.generate(records.length > 10 ? 10 : records.length, (i) {
           final r = records[i];
           final selected = selectedIndex == i;
           final bg = selected
@@ -62,11 +62,11 @@ class RecordsTable extends StatelessWidget {
             children: [
               _cell('${r.idColumn}'),
               _cell(r.note),
-              _cell(r.feet.toString()),
-              _cell(r.inch.toString()),
-              _cell(r.rft.toStringAsFixed(2)),
+              _cell(r.feet),
+              _cell(r.inch),
+              _cell(r.rft),
               _cell(r.qty.toString()),
-              _cell(r.total.toStringAsFixed(2)),
+              _cell(r.total),
             ],
           ).withTap(() => onTapRow(i));
         }),
@@ -76,8 +76,8 @@ class RecordsTable extends StatelessWidget {
 
   Widget _cell(String s) => InkWell(
     child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-      child: Text(s,textAlign: TextAlign.center),
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
+      child: Text(s, textAlign: TextAlign.center),
     ),
   );
 }

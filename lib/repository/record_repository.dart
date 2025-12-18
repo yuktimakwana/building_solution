@@ -60,7 +60,7 @@ class RecordsRepository {
   void _startOnlineListener() {
     if (_listening) return;
     _onlineSubscription = _col
-        .orderBy('id_column', descending: true)
+        .orderBy('no', descending: true)
         .limit(100)
         .snapshots()
         .listen((snapshot) async {

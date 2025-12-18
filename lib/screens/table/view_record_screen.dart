@@ -134,7 +134,7 @@ import 'package:duplicate_building_solution/widgets/loading_widget.dart';
 import 'package:flutter/material.dart';
 
 class ViewRecordsScreen extends StatelessWidget {
-   List<QueryDocumentSnapshot<Map<String, dynamic>>> excelData = [];
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> excelData = [];
 
   final String partyName;
   final String projectName;
@@ -186,7 +186,7 @@ class ViewRecordsScreen extends StatelessWidget {
             .collection('file')
             .doc(fileName)
             .collection('records')
-            .orderBy('id_column')
+            .orderBy('no')
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -199,14 +199,10 @@ class ViewRecordsScreen extends StatelessWidget {
 
           excelData = snapshot.data!.docs;
 
-
           return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: _RecordsTable(records: records),
-              ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 16.0),
+              child: _RecordsTable(records: records),
             ),
           );
         },
@@ -222,7 +218,10 @@ class _RecordsTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
 
     final border = TableBorder.all(color: Colors.black54, width: 1);
 
@@ -233,14 +232,14 @@ class _RecordsTable extends StatelessWidget {
 
       child: Table(
         border: border,
-        columnWidths: const {
-          0: FlexColumnWidth(0.8),
-          1: FlexColumnWidth(2),
-          2: FlexColumnWidth(1),
-          3: FlexColumnWidth(1),
-          4: FlexColumnWidth(1),
-          5: FlexColumnWidth(1),
-          6: FlexColumnWidth(1),
+        columnWidths:  {
+          0: const FractionColumnWidth(0.08),
+          1: const FractionColumnWidth(0.3),
+          2: const FractionColumnWidth(0.09),
+          3: const FractionColumnWidth(0.09),
+          4: const FractionColumnWidth(0.15),
+          5: const FractionColumnWidth(0.08),
+          6: const FractionColumnWidth(0.15),
         },
         defaultVerticalAlignment: TableCellVerticalAlignment.middle,
         children: [
@@ -248,15 +247,16 @@ class _RecordsTable extends StatelessWidget {
             decoration: const BoxDecoration(color: Color(0xFFF2F2F2)),
             children: headers
                 .map(
-                  (h) => Padding(
-                    padding: const EdgeInsets.all(8),
+                  (h) =>
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2,vertical: 8),
                     child: Text(
                       h,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                   ),
-                )
+            )
                 .toList(),
           ),
           ...records.map((r) {
@@ -265,11 +265,11 @@ class _RecordsTable extends StatelessWidget {
               children: [
                 _cell('${r.idColumn}'),
                 _cell(r.note),
-                _cell(r.feet.toString()),
-                _cell(r.inch.toString()),
-                _cell(r.rft.toStringAsFixed(2)),
+                _cell(r.feet),
+                _cell(r.inch),
+                _cell(r.rft),
                 _cell(r.qty.toString()),
-                _cell(r.total.toStringAsFixed(2)),
+                _cell(r.total),
               ],
             );
           }),
@@ -278,14 +278,15 @@ class _RecordsTable extends StatelessWidget {
     );
   }
 
-  Widget _cell(String text) => Padding(
-    padding: const EdgeInsets.all(8),
-    child: Text(
-      text,
-      style: const TextStyle(fontSize: 14),
-      overflow: TextOverflow.ellipsis,
-      textAlign: TextAlign.center,
-      maxLines: 3,
-    ),
-  );
+  Widget _cell(String text) =>
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2,vertical: 8),
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 14),
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          maxLines: 3,
+        ),
+      );
 }

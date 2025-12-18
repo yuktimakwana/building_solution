@@ -16,9 +16,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 enum FormMode { add, edit, insertAfter }
 
 class TableDataScreen extends StatefulWidget {
-  final String fileName,partyName,projectName;
+  final String fileName, partyName, projectName;
 
-  const TableDataScreen({super.key, required this.fileName, required this.partyName,required this.projectName});
+  const TableDataScreen({
+    super.key,
+    required this.fileName,
+    required this.partyName,
+    required this.projectName,
+  });
 
   @override
   State<TableDataScreen> createState() => _TableDataScreenState();
@@ -110,6 +115,8 @@ class _TableDataScreenState extends State<TableDataScreen> {
       builder: (context, state) {
         final hasData = state.hasData;
 
+        print(state.error);
+
         final theme = Theme.of(context);
         final green = ColorConstant.greenColor;
 
@@ -168,7 +175,7 @@ class _TableDataScreenState extends State<TableDataScreen> {
             absorbing: state.loading,
             child: SingleChildScrollView(
               controller: _scrollController,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 10,vertical: 16),
               child: Column(
                 children: [
                   if (hasData)
@@ -349,7 +356,7 @@ class _TableDataScreenState extends State<TableDataScreen> {
                                 state.inch.isEmpty &&
                                 state.qty.isEmpty
                             ? ''
-                            : '${state.total.toStringAsFixed(2)} Feet',
+                            : '${state.total} Feet',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
