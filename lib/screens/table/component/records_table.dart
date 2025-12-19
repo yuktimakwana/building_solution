@@ -17,6 +17,12 @@ class RecordsTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final border = TableBorder.all(color: Colors.black54, width: 1);
 
+    final last10Desc = records.length > 10
+        ? records.take(10).toList()
+        : List.of(records);
+
+    final displayRecords = last10Desc.reversed.toList();
+
     // Header row
     final headers = const ['#', 'Note', 'Feet', 'Inch', 'Rft', 'Qty', 'Total'];
 
@@ -51,8 +57,8 @@ class RecordsTable extends StatelessWidget {
               )
               .toList(),
         ),
-        ...List.generate(records.length > 10 ? 10 : records.length, (i) {
-          final r = records[i];
+        ...List.generate(displayRecords.length, (i) {
+          final r = displayRecords[i];
           final selected = selectedIndex == i;
           final bg = selected
               ? const Color(0xFFE6F4EA)

@@ -175,7 +175,7 @@ class _TableDataScreenState extends State<TableDataScreen> {
             absorbing: state.loading,
             child: SingleChildScrollView(
               controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 10,vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
               child: Column(
                 children: [
                   if (hasData)
@@ -234,14 +234,9 @@ class _TableDataScreenState extends State<TableDataScreen> {
                       controller: _noteCtrl,
                       focusNode: _noteFocus,
                       textInputAction: TextInputAction.next,
-                      // 👈 shows "Next" on keyboard
                       hint: TextConstant.note,
                       keyboardType: TextInputType.text,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r"[a-zA-Z0-9\s\-\._]"),
-                        ),
-                      ],
+                      inputFormatters: [],
                       onChanged: (v) => bloc.add(RecordsNoteChanged(v)),
                     ),
                   ),

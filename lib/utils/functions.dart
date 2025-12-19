@@ -41,10 +41,7 @@ class FirebaseRef {
   }
 }
 
-
-
 /// Copies all documents (and subcollections) from [sourcePath] to [destinationPath]
-
 
 Future<void> migratePartyDataToBuildingSolution(String uid) async {
   final firestore = FirebaseFirestore.instance;
@@ -70,7 +67,9 @@ Future<void> migratePartyDataToBuildingSolution(String uid) async {
     print('📁 Copied Party: ${partyDoc.id}');
 
     // Copy project subcollection
-    final projectSnapshot = await partyDoc.reference.collection('project').get();
+    final projectSnapshot = await partyDoc.reference
+        .collection('project')
+        .get();
     for (final projectDoc in projectSnapshot.docs) {
       final projectData = projectDoc.data();
       await newRoot
@@ -96,8 +95,9 @@ Future<void> migratePartyDataToBuildingSolution(String uid) async {
         print('📦 Copied File: ${fileDoc.id}');
 
         // Copy records subcollection
-        final recordSnapshot =
-        await fileDoc.reference.collection('records').get();
+        final recordSnapshot = await fileDoc.reference
+            .collection('records')
+            .get();
         for (final recordDoc in recordSnapshot.docs) {
           final recordData = recordDoc.data();
           await newRoot
