@@ -1,5 +1,5 @@
-import 'package:duplicate_building_solution/model/record_model.dart';
 import 'package:flutter/material.dart';
+import 'package:duplicate_building_solution/model/record_model.dart';
 
 class RecordsTable extends StatelessWidget {
   const RecordsTable({
@@ -17,74 +17,88 @@ class RecordsTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final border = TableBorder.all(color: Colors.black54, width: 1);
 
-    final last10Desc = records.length > 10
-        ? records.take(10).toList()
-        : List.of(records);
+    /// 1️⃣ Make copy of original list
+    final List<RecordModel> sortedRecords =
+    List<RecordModel>.from(records);
 
-    final displayRecords = last10Desc.reversed.toList();
+    /// 2️⃣ SORT ASCENDING by numeric ID (IMPORTANT FIX)
+    sortedRecords.sort((a, b) {
+      final double aId = double.tryParse('${a.idColumn}') ?? 0;
+      final double bId = double.tryParse('${b.idColumn}') ?? 0;
+      return aId.compareTo(bId);
+    });
 
-    // Header row
-    final headers = const ['#', 'Note', 'Feet', 'Inch', 'Rft', 'Qty', 'Total'];
+    /// 3️⃣ TAKE LAST 10 RECORDS (ASCENDING)
+    final List<RecordModel> displayRecords =
+    sortedRecords.length > 10
+        ? sortedRecords.sublist(sortedRecords.length - 10)
+        : sortedRecords;
+
+    const headers = ['#', 'Note', 'Feet', 'Inch', 'Rft', 'Qty', 'Total'];
 
     return Table(
       border: border,
-      columnWidths:   {
-        0: const FractionColumnWidth(0.08),
-        1: const FractionColumnWidth(0.33),
-        2: const FractionColumnWidth(0.1),
-        3: const FractionColumnWidth(0.1),
-        4: const FractionColumnWidth(0.15),
-        5: const FractionColumnWidth(0.08),
-        6: const FractionColumnWidth(0.15),
-        },
+      columnWidths: const {
+        0: FractionColumnWidth(0.08),
+        1: FractionColumnWidth(0.33),
+        2: FractionColumnWidth(0.1),
+        3: FractionColumnWidth(0.1),
+        4: FractionColumnWidth(0.15),
+        5: FractionColumnWidth(0.08),
+        6: FractionColumnWidth(0.15),
+      },
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       children: [
+        /// HEADER
         TableRow(
           decoration: const BoxDecoration(color: Color(0xFFF2F2F2)),
           children: headers
               .map(
                 (h) => Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 2,
-                  ),
-                  child: Text(
-                    h,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              )
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                h,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          )
               .toList(),
         ),
+
+        /// ROWS
         ...List.generate(displayRecords.length, (i) {
-          final r = displayRecords[i];
-          final selected = selectedIndex == i;
-          final bg = selected
-              ? const Color(0xFFE6F4EA)
-              : Colors.white; // soft green highlight
+          final record = displayRecords[i];
+
+          /// 4️⃣ FIND CORRECT INDEX FROM ORIGINAL LIST
+          final int actualIndex = records.indexWhere(
+                (e) => e.idColumn == record.idColumn,
+          );
+
           return TableRow(
-            decoration: BoxDecoration(color: bg),
+            decoration: BoxDecoration(
+              color: selectedIndex == actualIndex
+                  ? const Color(0xFFE6F4EA)
+                  : Colors.white,
+            ),
             children: [
-              _cell('${r.idColumn}'),
-              _cell(r.note),
-              _cell(r.feet),
-              _cell(r.inch),
-              _cell(r.rft),
-              _cell(r.qty.toString()),
-              _cell(r.total),
+              _cell('${record.idColumn}'),
+              _cell(record.note),
+              _cell(record.feet),
+              _cell(record.inch),
+              _cell(record.rft),
+              _cell(record.qty.toString()),
+              _cell(record.total),
             ],
-          ).withTap(() => onTapRow(i));
+          ).withTap(() => onTapRow(actualIndex));
         }),
       ],
     );
   }
 
-  Widget _cell(String s) => InkWell(
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
-      child: Text(s, textAlign: TextAlign.center),
-    ),
+  Widget _cell(String text) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+    child: Text(text, textAlign: TextAlign.center),
   );
 }
 
@@ -92,7 +106,9 @@ extension on TableRow {
   TableRow withTap(VoidCallback onTap) {
     return TableRow(
       decoration: decoration,
-      children: children.map((c) => InkWell(onTap: onTap, child: c)).toList(),
+      children: children
+          .map((child) => InkWell(onTap: onTap, child: child))
+          .toList(),
     );
   }
 }

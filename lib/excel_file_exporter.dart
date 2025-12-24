@@ -48,7 +48,7 @@ class ExcelReportExtractor {
 
     // Write data
     int rowNum = 1;
-    for (var rowData in model.reversed) {
+    for (var rowData in model) {
       int colNum = 0;
       for (var header in desiredOrder) {
         final value = rowData[header];

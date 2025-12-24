@@ -94,7 +94,7 @@ class TextConstant {
   static String fileCollection = 'file';
   static String recordsCollection = 'records';
 
-  static String idColumn = 'id_column';
+  static String idColumn = 'no';
   static String noteColumn = 'note';
   static String rftColumn = 'rft';
   static String inchColumn = 'inch';
