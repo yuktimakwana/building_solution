@@ -19,7 +19,7 @@ class ExcelReportExtractor {
 
   final Excel excelFile = Excel.createExcel();
 
-  create({required List<Map<String, dynamic>> model}) async {
+  Future<void> create({required List<Map<String, dynamic>> model}) async {
     Sheet sheetObject = excelFile['Sheet1'];
     // final allKeys = model.expand((map) => map.keys).toSet().toList().reversed;
 

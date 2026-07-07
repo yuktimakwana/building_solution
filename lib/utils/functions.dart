@@ -29,15 +29,18 @@ class FirebaseRef {
   static const String collectionName = 'party';
   static late String uid;
   static late CollectionReference<Map<String, dynamic>> partyUserDoc;
+  static late DocumentReference<Map<String, dynamic>> userProfileDoc;
 
   static Future<void> init() async {
     final user = FirebaseAuth.instance.currentUser;
     uid = user?.uid ?? '';
 
-    partyUserDoc = FirebaseFirestore.instance
+    final rootDoc = FirebaseFirestore.instance
         .collection('building_solution')
-        .doc(uid.isEmpty ? 'default_user' : uid)
-        .collection(collectionName);
+        .doc(uid.isEmpty ? 'default_user' : uid);
+
+    partyUserDoc = rootDoc.collection(collectionName);
+    userProfileDoc = rootDoc;
   }
 }
 
@@ -52,19 +55,16 @@ Future<void> migratePartyDataToBuildingSolution(String uid) async {
   // New root
   final newRoot = firestore.collection('building_solution').doc(uid);
 
-  print('🚀 Starting migration for UID: $uid');
 
   // Get all party documents
   final partySnapshot = await oldRoot.get();
   if (partySnapshot.docs.isEmpty) {
-    print('⚠️ No party documents found.');
     return;
   }
 
   for (final partyDoc in partySnapshot.docs) {
     final partyData = partyDoc.data();
     await newRoot.collection('party').doc(partyDoc.id).set(partyData);
-    print('📁 Copied Party: ${partyDoc.id}');
 
     // Copy project subcollection
     final projectSnapshot = await partyDoc.reference
@@ -78,7 +78,6 @@ Future<void> migratePartyDataToBuildingSolution(String uid) async {
           .collection('project')
           .doc(projectDoc.id)
           .set(projectData);
-      print('📄 Copied Project: ${projectDoc.id}');
 
       // Copy file subcollection
       final fileSnapshot = await projectDoc.reference.collection('file').get();
@@ -92,7 +91,6 @@ Future<void> migratePartyDataToBuildingSolution(String uid) async {
             .collection('file')
             .doc(fileDoc.id)
             .set(fileData);
-        print('📦 Copied File: ${fileDoc.id}');
 
         // Copy records subcollection
         final recordSnapshot = await fileDoc.reference
@@ -111,10 +109,8 @@ Future<void> migratePartyDataToBuildingSolution(String uid) async {
               .doc(recordDoc.id)
               .set(recordData);
         }
-        print('🧾 Copied all records for File: ${fileDoc.id}');
       }
     }
   }
 
-  print('✅ Migration completed successfully for UID: $uid');
 }

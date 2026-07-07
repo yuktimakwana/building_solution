@@ -115,7 +115,6 @@ class _TableDataScreenState extends State<TableDataScreen> {
       builder: (context, state) {
         final hasData = state.hasData;
 
-        print(state.error);
 
         final theme = Theme.of(context);
         final green = ColorConstant.greenColor;
@@ -140,7 +139,7 @@ class _TableDataScreenState extends State<TableDataScreen> {
             actions: [
               ValueListenableBuilder<bool>(
                 valueListenable: connectivity,
-                builder: (_, isOnline, __) {
+                builder: (_, isOnline, _) {
                   if (!hasData || !isOnline) return const SizedBox.shrink();
                   return Padding(
                     padding: const EdgeInsets.only(right: 12),
@@ -383,7 +382,8 @@ class _TableDataScreenState extends State<TableDataScreen> {
                           onPressed: () {
                             bloc.add(RecordsNextPressed());
 
-                            Future.delayed(Duration(seconds: 1), () {
+                            Future.delayed(const Duration(seconds: 1), () {
+                              if (!mounted) return;
                               FocusScope.of(context).requestFocus(_noteFocus);
                             });
                           },

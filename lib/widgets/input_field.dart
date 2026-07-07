@@ -31,7 +31,7 @@ class InputField extends StatefulWidget {
 }
 
 class InputFieldState extends State<InputField> {
-  pageReload() {
+  void pageReload() {
     setState(() {});
   }
 

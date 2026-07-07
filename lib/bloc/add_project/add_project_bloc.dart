@@ -1,4 +1,3 @@
-import 'package:duplicate_building_solution/model/project_model.dart';
 import 'package:duplicate_building_solution/repository/add_project_repository.dart';
 import 'package:duplicate_building_solution/utils/text_constant.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

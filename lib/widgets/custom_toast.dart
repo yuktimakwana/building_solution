@@ -1,7 +1,7 @@
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-customToast(String toastMessage) {
+void customToast(String toastMessage) {
   Fluttertoast.showToast(
       msg: toastMessage,
       toastLength: Toast.LENGTH_SHORT,

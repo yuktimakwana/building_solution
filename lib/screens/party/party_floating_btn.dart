@@ -3,12 +3,10 @@ import 'package:duplicate_building_solution/dialog/component/confirm_button.dart
 import 'package:duplicate_building_solution/dialog/create_description_dialog.dart';
 import 'package:duplicate_building_solution/model/party_model.dart';
 import 'package:duplicate_building_solution/repository/add_party_repository.dart';
-import 'package:duplicate_building_solution/screens/project/project_screen.dart';
 import 'package:duplicate_building_solution/utils/change_notifier_ex.dart';
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/image_constant.dart';
 import 'package:duplicate_building_solution/utils/text_constant.dart';
-import 'package:duplicate_building_solution/utils/functions.dart';
 import 'package:duplicate_building_solution/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -44,7 +42,6 @@ Widget floatingActionButton({
                 builder: (context, changeNotifierEx, child) {
                   return BlocConsumer<AddPartyBloc, AddPartyState>(
                     listener: (context, state) {
-                      print('state--------$state');
                       if (state is AddPartyError) {
                         customToast(state.errorMessage);
                       } else if (state is AddPartyComplete) {
@@ -82,10 +79,7 @@ Widget floatingActionButton({
                                       .trim()
                                       .toLowerCase();
 
-                                  // Debug list
-                                  for (var p in partyModel) {
-                                    print(" - ${p.partyNameLower}");
-                                  }
+
 
                                   // 1️⃣ Check duplicate (ignore case, ignore spaces)
                                   final isDuplicate = partyModel.any((party) {

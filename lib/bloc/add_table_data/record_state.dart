@@ -17,7 +17,6 @@ class RecordsState {
   final RecordModel? selected;
 
   bool get hasData => records.isNotEmpty;
-  @override
   List<Object?> get props => [
     records,
     selectedIndex,

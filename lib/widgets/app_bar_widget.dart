@@ -13,9 +13,10 @@ PreferredSizeWidget appBarWidget({
   TextEditingController? searchEditingController,
   Function()? onClose,
   Function()? backPress,
+  bool showSearchBar = true,
 }) {
   return PreferredSize(
-    preferredSize: Size.fromHeight(action == null ? 100 : 60),
+    preferredSize: Size.fromHeight(showSearchBar ? 100 : 60),
     child: StatefulBuilder(
       builder: (context, setState) {
         return AppBar(
@@ -47,7 +48,7 @@ PreferredSizeWidget appBarWidget({
             textAlign: TextAlign.center,
           ),
           actions: action,
-          bottom: action == null
+          bottom: showSearchBar
               ? PreferredSize(
                   preferredSize: const Size.fromHeight(60),
                   child: Padding(
@@ -87,9 +88,9 @@ PreferredSizeWidget appBarWidget({
                     ),
                   ),
                 )
-              : PreferredSize(
-                  preferredSize: const Size.fromHeight(0),
-                  child: const SizedBox(),
+              : const PreferredSize(
+                  preferredSize: Size.fromHeight(0),
+                  child: SizedBox(),
                 ),
         );
       },

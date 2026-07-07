@@ -1,7 +1,8 @@
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:duplicate_building_solution/offline/offline_sync_service.dart';
 import 'package:duplicate_building_solution/dialog/delete_dialog.dart';
+import 'package:duplicate_building_solution/offline/offline_sync_service.dart';
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
 import 'package:duplicate_building_solution/utils/image_constant.dart';
@@ -304,15 +305,17 @@ class _ProjectRecycleBinScreenState extends State<ProjectRecycleBinScreen> {
       // Handle Timestamp, int, or null
       int aMillis = 0;
       int bMillis = 0;
-      if (aTime is Timestamp)
+      if (aTime is Timestamp) {
         aMillis = aTime.millisecondsSinceEpoch;
-      else if (aTime is int)
+      } else if (aTime is int) {
         aMillis = aTime;
+      }
 
-      if (bTime is Timestamp)
+      if (bTime is Timestamp) {
         bMillis = bTime.millisecondsSinceEpoch;
-      else if (bTime is int)
+      } else if (bTime is int) {
         bMillis = bTime;
+      }
 
       return bMillis.compareTo(aMillis);
     });

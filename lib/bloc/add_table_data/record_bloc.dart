@@ -68,9 +68,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   void _onRowSelected(RecordsRowSelected e, Emitter<RecordsState> emit) {
     if (e.index < 0 || e.index >= state.records.length) return;
     final selectedRecord = state.records[e.index];
-    print(
-      'Row selected: ${selectedRecord.docId}, line: ${selectedRecord.idColumn}',
-    );
 
     emit(
       state.copyWith(
@@ -85,8 +82,6 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
   void _onEdit(RecordsEditPressed e, Emitter<RecordsState> emit) {
     final sel = state.selected;
     if (sel == null) return;
-
-    print('Edit selected: $sel');
 
     // Prefill fields, lock in existing line number
     _recompute(

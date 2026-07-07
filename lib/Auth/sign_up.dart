@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:duplicate_building_solution/utils/color_constant.dart';
+import 'package:duplicate_building_solution/utils/functions.dart';
 import 'package:duplicate_building_solution/utils/text_constant.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -14,6 +17,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _auth = FirebaseAuth.instance;
 
+  final _userNameController = TextEditingController();
+  final _mobileController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -21,6 +26,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
+  String? _userNameError;
+  String? _mobileError;
   String? _emailError;
   String? _passwordError;
   String? _confirmPasswordError;
@@ -30,6 +37,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<void> _signUp() async {
     setState(() {
+      _userNameError = null;
+      _mobileError = null;
       _emailError = null;
       _passwordError = null;
       _confirmPasswordError = null;
@@ -37,10 +46,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (_formKey.currentState!.validate()) {
       try {
-        await _auth.createUserWithEmailAndPassword(
+        UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
+
+        // Re-initialize FirebaseRef with new user UID
+        await FirebaseRef.init();
+
+        // Update display name
+        await userCredential.user?.updateDisplayName(_userNameController.text.trim());
+
+        // Save profile data to Firestore
+        await FirebaseRef.userProfileDoc.set({
+          'displayName': _userNameController.text.trim(),
+          'mobile': _mobileController.text.trim(),
+          'email': _emailController.text.trim(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
         if (!mounted) return;
         Navigator.pushReplacementNamed(context, '/signin');
       } on FirebaseAuthException catch (e) {
@@ -113,6 +137,49 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
                   const SizedBox(height: 25),
+
+                  // User Name Field
+                  texts(titleText: TextConstant.userName),
+                  const SizedBox(height: 6),
+                  textForms(
+                    textEditingController: _userNameController,
+                    hintText: TextConstant.userNameHint,
+                    textInputAction: TextInputAction.next,
+                    keyboardType: TextInputType.name,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return TextConstant.userNameError;
+                      }
+                      return null;
+                    },
+                  ),
+                  _buildErrorText(_userNameError),
+                  const SizedBox(height: 15),
+
+                  // Mobile Number Field
+                  texts(titleText: TextConstant.mobileNumber),
+                  const SizedBox(height: 6),
+                  textForms(
+                    textEditingController: _mobileController,
+                    hintText: TextConstant.mobileNumberHint,
+                    textInputAction: TextInputAction.next,
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return TextConstant.mobileNumberError;
+                      }
+                      if (value.length < 10) {
+                        return TextConstant.mobileNumberError;
+                      }
+                      return null;
+                    },
+                  ),
+                  _buildErrorText(_mobileError),
+                  const SizedBox(height: 15),
 
                   // Email Field
                   texts(titleText: TextConstant.emailId),
@@ -273,12 +340,14 @@ Widget textForms({
   Widget icon = const SizedBox(),
   String? Function(String?)? validator,
   required String hintText,
+  List<TextInputFormatter>? inputFormatters,
 }) {
   return TextFormField(
     controller: textEditingController,
     obscureText: obscureText,
     keyboardType: keyboardType,
     textInputAction: textInputAction,
+    inputFormatters: inputFormatters,
     decoration: InputDecoration(
       hintText: hintText,
       fillColor: Colors.white,

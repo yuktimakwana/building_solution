@@ -21,7 +21,7 @@ class ErrorValidation with ChangeNotifier {
 class ScrollToUpOnKb with ChangeNotifier {
   bool isReverse = false;
 
-  void setValue(reverse) {
+  void setValue(bool reverse) {
     isReverse = reverse;
     notifyListeners();
   }

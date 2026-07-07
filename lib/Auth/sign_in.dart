@@ -1,4 +1,5 @@
 import 'package:duplicate_building_solution/Auth/sign_up.dart';
+import 'package:duplicate_building_solution/utils/functions.dart';
 import 'package:duplicate_building_solution/utils/text_constant.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -38,10 +39,16 @@ class _SignInScreenState extends State<SignInScreen> {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
 
+      // Re-initialize FirebaseRef with logged in user UID
+      await FirebaseRef.init();
+
       if (!mounted) return;
 
       // Save session locally
       final sp = await SharedPreferences.getInstance();
+
+      if (!mounted) return;
+
       sp.setString('email', email);
       sp.setString('UID', FirebaseAuth.instance.currentUser?.uid ?? '');
 

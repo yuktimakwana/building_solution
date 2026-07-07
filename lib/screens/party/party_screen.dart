@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:duplicate_building_solution/dialog/delete_dialog.dart';
 import 'package:duplicate_building_solution/model/party_model.dart';
 import 'package:duplicate_building_solution/offline/offline_status.dart';
 import 'package:duplicate_building_solution/offline/offline_sync_service.dart';
 import 'package:duplicate_building_solution/screens/party/party_floating_btn.dart';
 import 'package:duplicate_building_solution/screens/party/party_recycle_bin.dart';
+import 'package:duplicate_building_solution/screens/profile/profile_screen.dart';
 import 'package:duplicate_building_solution/screens/project/project_screen.dart';
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
@@ -18,7 +20,6 @@ import 'package:duplicate_building_solution/widgets/error_widget.dart';
 import 'package:duplicate_building_solution/widgets/loading_widget.dart';
 import 'package:duplicate_building_solution/widgets/no_project_found.dart';
 import 'package:duplicate_building_solution/widgets/sync_status_banner.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -178,6 +179,47 @@ class _PartyScreenState extends State<PartyScreen> {
               leadingPress: () {
                 pageTransition(context, const PartyRecycleBin());
               },
+              action: [
+                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseRef.userProfileDoc.snapshots(),
+                  builder: (context, profileSnap) {
+                    final data = profileSnap.data?.data() ?? {};
+                    final user = FirebaseAuth.instance.currentUser;
+                    final displayName = data['displayName'] ?? user?.displayName ?? '';
+                    final photoUrl = data['image_url'] ?? data['photoUrl'] ?? user?.photoURL;
+
+                    return GestureDetector(
+                      onTap: () {
+                        pageTransition(context, const ProfileScreen());
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 15),
+                        child: CircleAvatar(
+                          radius: 18,
+                          backgroundColor: ColorConstant.naturalWhiteColor,
+                          child: CircleAvatar(
+                            radius: 16,
+                            backgroundColor: ColorConstant.greenColor,
+                            backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                                ? NetworkImage(photoUrl)
+                                : null,
+                            child: (photoUrl == null || photoUrl.isEmpty)
+                                ? Text(
+                                    displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
               searchEditingController: _searchController,
               onClose: () {
                 _searchController.clear();

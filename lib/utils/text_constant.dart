@@ -85,6 +85,12 @@ class TextConstant {
   static String confirmPwdHint = 'Re-enter your Password';
   static String signInBtn = 'Sign In';
   static String signUpBtn = 'Sign Up';
+  static String userName = 'User Name';
+  static String userNameHint = 'Enter your Name';
+  static String userNameError = 'Name cannot be empty';
+  static String mobileNumber = 'Mobile Number';
+  static String mobileNumberHint = 'Enter your Mobile Number';
+  static String mobileNumberError = 'Enter a valid mobile number';
   static String alreadyUser = 'Already User? Sign In';
   static String newUser = 'New User? Sign Up';
   static String clientError = 'Something went wrong';

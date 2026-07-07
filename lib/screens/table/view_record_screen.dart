@@ -133,14 +133,12 @@ import 'package:duplicate_building_solution/widgets/app_bar_widget.dart';
 import 'package:duplicate_building_solution/widgets/loading_widget.dart';
 import 'package:flutter/material.dart';
 
-class ViewRecordsScreen extends StatelessWidget {
-  List<QueryDocumentSnapshot<Map<String, dynamic>>> excelData = [];
-
+class ViewRecordsScreen extends StatefulWidget {
   final String partyName;
   final String projectName;
   final String fileName;
 
-  ViewRecordsScreen({
+  const ViewRecordsScreen({
     super.key,
     required this.partyName,
     required this.projectName,
@@ -148,15 +146,23 @@ class ViewRecordsScreen extends StatelessWidget {
   });
 
   @override
+  State<ViewRecordsScreen> createState() => _ViewRecordsScreenState();
+}
+
+class _ViewRecordsScreenState extends State<ViewRecordsScreen> {
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> excelData = [];
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appBarWidget(
-        title: fileName,
+        title: widget.fileName,
         context: context,
         backPress: () {
           Navigator.pop(context);
         },
         color: ColorConstant.greenColor,
+        showSearchBar: false,
         action: [
           IconButton(
             onPressed: () async {
@@ -166,9 +172,9 @@ class ViewRecordsScreen extends StatelessWidget {
               }
 
               ExcelReportExtractor(
-                partyName: partyName,
-                fileName: fileName,
-                projectName: projectName,
+                partyName: widget.partyName,
+                fileName: widget.fileName,
+                projectName: widget.projectName,
               ).create(model: model);
             },
             icon: const Icon(
@@ -180,11 +186,11 @@ class ViewRecordsScreen extends StatelessWidget {
       ),
       body: StreamBuilder(
         stream: FirebaseRef.partyUserDoc
-            .doc(partyName)
+            .doc(widget.partyName)
             .collection('project')
-            .doc(projectName)
+            .doc(widget.projectName)
             .collection('file')
-            .doc(fileName)
+            .doc(widget.fileName)
             .collection('records')
             .orderBy('no')
             .snapshots(),

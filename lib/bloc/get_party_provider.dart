@@ -60,7 +60,7 @@ class GetPartyProvider with ChangeNotifier {
         .get();
 
     parties = query.docs
-        .map((doc) => PartyModel.fromMap(doc.data() as Map<String, dynamic>))
+        .map((doc) => PartyModel.fromMap(doc.data()))
         .toList();
     notifyListeners();
   }

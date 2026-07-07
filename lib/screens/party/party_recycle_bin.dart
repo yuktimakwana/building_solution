@@ -292,15 +292,17 @@ class _PartyRecycleBinState extends State<PartyRecycleBin> {
       // Handle Timestamp, int, or null
       int aMillis = 0;
       int bMillis = 0;
-      if (aTime is Timestamp)
+      if (aTime is Timestamp) {
         aMillis = aTime.millisecondsSinceEpoch;
-      else if (aTime is int)
+      } else if (aTime is int) {
         aMillis = aTime;
-
-      if (bTime is Timestamp)
+      }
+      if (bTime is Timestamp) {
         bMillis = bTime.millisecondsSinceEpoch;
-      else if (bTime is int)
+      }
+      else if (bTime is int) {
         bMillis = bTime;
+      }
 
       return bMillis.compareTo(aMillis);
     });

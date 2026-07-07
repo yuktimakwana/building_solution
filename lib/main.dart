@@ -2,6 +2,7 @@ import 'package:duplicate_building_solution/Auth/sign_in.dart';
 import 'package:duplicate_building_solution/Auth/sign_up.dart';
 import 'package:duplicate_building_solution/firebase_options.dart';
 import 'package:duplicate_building_solution/screens/party/party_screen.dart';
+import 'package:duplicate_building_solution/screens/profile/profile_screen.dart';
 import 'package:duplicate_building_solution/screens/splash_screen.dart';
 import 'package:duplicate_building_solution/theme/theme_constant.dart';
 import 'package:duplicate_building_solution/offline/offline_sync_service.dart';
@@ -47,6 +48,7 @@ class MyApp extends StatelessWidget {
               '/signin': (context) => SignInScreen(),
               '/signUp': (context) => SignUpScreen(),
               '/party': (context) => PartyScreen(),
+              '/profile': (context) => const ProfileScreen(),
             },
             debugShowCheckedModeBanner: false,
             title: 'TBBS',
