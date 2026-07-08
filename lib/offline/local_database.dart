@@ -242,6 +242,8 @@ class LocalDatabase {
   }
 
   Future<void> _createTables(Database db) async {
+
+
     await db.execute('''
       CREATE TABLE IF NOT EXISTS cache_entities (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -273,5 +275,28 @@ class LocalDatabase {
     await db.execute(
       'CREATE INDEX IF NOT EXISTS pending_operations_status_idx ON pending_operations(status);',
     );
+  }
+
+  Future<File> exportOfflineData() async {
+    final pending = await _db!.query('pending_operations');
+    final cache = await _db!.query('cache_entities');
+
+    final data = {
+      'exported_at': DateTime.now().toIso8601String(),
+      'pending_operations': pending,
+      'cache_entities': cache,
+    };
+
+    final directory = await getApplicationDocumentsDirectory();
+
+    final file = File('${directory.path}/offline_backup.json');
+
+    await file.writeAsString(
+      const JsonEncoder.withIndent('  ').convert(data),
+    );
+
+    print('JSON File Path: ${file.path}');
+
+    return file;
   }
 }

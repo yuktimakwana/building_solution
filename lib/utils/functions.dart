@@ -34,10 +34,10 @@ class FirebaseRef {
   static Future<void> init() async {
     final user = FirebaseAuth.instance.currentUser;
     uid = user?.uid ?? '';
-
+    print('uid-----------------$uid');
     final rootDoc = FirebaseFirestore.instance
         .collection('building_solution')
-        .doc(uid.isEmpty ? 'default_user' : uid);
+        .doc(uid);
 
     partyUserDoc = rootDoc.collection(collectionName);
     userProfileDoc = rootDoc;
@@ -46,71 +46,69 @@ class FirebaseRef {
 
 /// Copies all documents (and subcollections) from [sourcePath] to [destinationPath]
 
-Future<void> migratePartyDataToBuildingSolution(String uid) async {
-  final firestore = FirebaseFirestore.instance;
-
-  // Old root
-  final oldRoot = firestore.collection('party');
-
-  // New root
-  final newRoot = firestore.collection('building_solution').doc(uid);
-
-
-  // Get all party documents
-  final partySnapshot = await oldRoot.get();
-  if (partySnapshot.docs.isEmpty) {
-    return;
-  }
-
-  for (final partyDoc in partySnapshot.docs) {
-    final partyData = partyDoc.data();
-    await newRoot.collection('party').doc(partyDoc.id).set(partyData);
-
-    // Copy project subcollection
-    final projectSnapshot = await partyDoc.reference
-        .collection('project')
-        .get();
-    for (final projectDoc in projectSnapshot.docs) {
-      final projectData = projectDoc.data();
-      await newRoot
-          .collection('party')
-          .doc(partyDoc.id)
-          .collection('project')
-          .doc(projectDoc.id)
-          .set(projectData);
-
-      // Copy file subcollection
-      final fileSnapshot = await projectDoc.reference.collection('file').get();
-      for (final fileDoc in fileSnapshot.docs) {
-        final fileData = fileDoc.data();
-        await newRoot
-            .collection('party')
-            .doc(partyDoc.id)
-            .collection('project')
-            .doc(projectDoc.id)
-            .collection('file')
-            .doc(fileDoc.id)
-            .set(fileData);
-
-        // Copy records subcollection
-        final recordSnapshot = await fileDoc.reference
-            .collection('records')
-            .get();
-        for (final recordDoc in recordSnapshot.docs) {
-          final recordData = recordDoc.data();
-          await newRoot
-              .collection('party')
-              .doc(partyDoc.id)
-              .collection('project')
-              .doc(projectDoc.id)
-              .collection('file')
-              .doc(fileDoc.id)
-              .collection('records')
-              .doc(recordDoc.id)
-              .set(recordData);
-        }
-      }
-    }
-  }
-
-}
+// Future<void> migratePartyDataToBuildingSolution(String uid) async {
+//   final firestore = FirebaseFirestore.instance;
+//
+//   // Old root
+//   final oldRoot = firestore.collection('party');
+//
+//   // New root
+//   final newRoot = firestore.collection('building_solution').doc(uid);
+//
+//   // Get all party documents
+//   final partySnapshot = await oldRoot.get();
+//   if (partySnapshot.docs.isEmpty) {
+//     return;
+//   }
+//
+//   for (final partyDoc in partySnapshot.docs) {
+//     final partyData = partyDoc.data();
+//     await newRoot.collection('party').doc(partyDoc.id).set(partyData);
+//
+//     // Copy project subcollection
+//     final projectSnapshot = await partyDoc.reference
+//         .collection('project')
+//         .get();
+//     for (final projectDoc in projectSnapshot.docs) {
+//       final projectData = projectDoc.data();
+//       await newRoot
+//           .collection('party')
+//           .doc(partyDoc.id)
+//           .collection('project')
+//           .doc(projectDoc.id)
+//           .set(projectData);
+//
+//       // Copy file subcollection
+//       final fileSnapshot = await projectDoc.reference.collection('file').get();
+//       for (final fileDoc in fileSnapshot.docs) {
+//         final fileData = fileDoc.data();
+//         await newRoot
+//             .collection('party')
+//             .doc(partyDoc.id)
+//             .collection('project')
+//             .doc(projectDoc.id)
+//             .collection('file')
+//             .doc(fileDoc.id)
+//             .set(fileData);
+//
+//         // Copy records subcollection
+//         final recordSnapshot = await fileDoc.reference
+//             .collection('records')
+//             .get();
+//         for (final recordDoc in recordSnapshot.docs) {
+//           final recordData = recordDoc.data();
+//           await newRoot
+//               .collection('party')
+//               .doc(partyDoc.id)
+//               .collection('project')
+//               .doc(projectDoc.id)
+//               .collection('file')
+//               .doc(fileDoc.id)
+//               .collection('records')
+//               .doc(recordDoc.id)
+//               .set(recordData);
+//         }
+//       }
+//     }
+//   }
+// }

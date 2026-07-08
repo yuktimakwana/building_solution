@@ -1,6 +1,7 @@
 import 'package:duplicate_building_solution/Auth/sign_in.dart';
 import 'package:duplicate_building_solution/Auth/sign_up.dart';
 import 'package:duplicate_building_solution/firebase_options.dart';
+import 'package:duplicate_building_solution/offline/local_database.dart';
 import 'package:duplicate_building_solution/screens/party/party_screen.dart';
 import 'package:duplicate_building_solution/screens/profile/profile_screen.dart';
 import 'package:duplicate_building_solution/screens/splash_screen.dart';
@@ -20,6 +21,13 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FirebaseRef.init();
   await OfflineSyncService.instance.initialize();
+
+  await LocalDatabase.instance.initialize();
+
+  final pending = await LocalDatabase.instance.getPendingOperations();
+
+  print('pending------------');
+  print(pending);
   runApp(const MyApp());
 }
 

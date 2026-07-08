@@ -207,7 +207,7 @@ class _PartyScreenState extends State<PartyScreen> {
                                 ? Text(
                                     displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
                                     style: const TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
