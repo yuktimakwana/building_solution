@@ -1,4 +1,4 @@
-import 'package:duplicate_building_solution/Auth/sign_up.dart';
+import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
 import 'package:duplicate_building_solution/utils/text_constant.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,8 +23,6 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _passwordVisible = false;
   String? validation;
 
-  final Color greenColor = const Color.fromRGBO(154, 190, 70, 1);
-
   // ====================== SIGN IN FUNCTION ======================
   void _signIn() async {
     setState(() {
@@ -40,7 +38,7 @@ class _SignInScreenState extends State<SignInScreen> {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
 
       // Re-initialize FirebaseRef with logged in user UID
-      await FirebaseRef.init();
+      FirebaseRef.init();
 
       if (!mounted) return;
 
@@ -57,14 +55,19 @@ class _SignInScreenState extends State<SignInScreen> {
     } on FirebaseAuthException catch (e) {
       setState(() {
         switch (e.code) {
+          case 'user-not-found':
+          case 'wrong-password':
           case 'invalid-credential':
             validation = TextConstant.emailPwdError;
             break;
           case 'too-many-requests':
             validation = TextConstant.tooManyReqError;
             break;
+          case 'user-disabled':
+            validation = 'This user account has been disabled.';
+            break;
           default:
-            validation = TextConstant.somethingWrong;
+            validation = e.message ?? TextConstant.somethingWrong;
         }
       });
     } catch (e) {
@@ -101,7 +104,7 @@ class _SignInScreenState extends State<SignInScreen> {
             padding: const EdgeInsets.all(20),
             margin: const EdgeInsets.symmetric(horizontal: 20),
             decoration: BoxDecoration(
-              color: greenColor.withValues(alpha: 0.9),
+              color: ColorConstant.greenColor.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -153,7 +156,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           _passwordVisible
                               ? Icons.visibility
                               : Icons.visibility_off,
-                          color: greenColor,
+                          color: ColorConstant.greenColor,
                         ),
                         onPressed: () {
                           setState(() => _passwordVisible = !_passwordVisible);
@@ -176,13 +179,15 @@ class _SignInScreenState extends State<SignInScreen> {
                                   size: 18,
                                 ),
                                 const SizedBox(width: 5),
-                                Text(
-                                  validation ?? '',
-                                  style: const TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 13,
+                                Expanded(
+                                  child: Text(
+                                    validation ?? '',
+                                    style: const TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 13,
+                                    ),
+                                    softWrap: true,
                                   ),
-                                  softWrap: true,
                                 ),
                               ],
                             ),
@@ -191,24 +196,24 @@ class _SignInScreenState extends State<SignInScreen> {
 
                     // ====================== SIGN IN BUTTON ======================
                     Center(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: greenColor,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 110,
-                            vertical: 15,
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: ColorConstant.greenColor,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: _signIn,
-                        child:  Text(
-                          TextConstant.signInBtn,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
+                          onPressed: _signIn,
+                          child: Text(
+                            TextConstant.signInBtn,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
                           ),
                         ),
                       ),

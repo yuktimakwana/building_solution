@@ -52,7 +52,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         );
 
         // Re-initialize FirebaseRef with new user UID
-        await FirebaseRef.init();
+        FirebaseRef.init();
 
         // Update display name
         await userCredential.user?.updateDisplayName(_userNameController.text.trim());
@@ -88,14 +88,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
       children: [
         const Icon(Icons.error, color: ColorConstant.errorColor, size: 16),
         const SizedBox(width: 5),
-        Text(
-          error,
-          softWrap: true,
-          style: TextStyle(
-            color: errorColor,
-            overflow: TextOverflow.visible,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
+        Expanded(
+          child: Text(
+            error,
+            softWrap: true,
+            style: TextStyle(
+              color: errorColor,
+              overflow: TextOverflow.visible,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ],
@@ -329,43 +331,4 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
     );
   }
-}
-
-// ✅ TextFormField Widget
-Widget textForms({
-  required TextEditingController textEditingController,
-  required TextInputAction textInputAction,
-  bool obscureText = false,
-  TextInputType keyboardType = TextInputType.emailAddress,
-  Widget icon = const SizedBox(),
-  String? Function(String?)? validator,
-  required String hintText,
-  List<TextInputFormatter>? inputFormatters,
-}) {
-  return TextFormField(
-    controller: textEditingController,
-    obscureText: obscureText,
-    keyboardType: keyboardType,
-    textInputAction: textInputAction,
-    inputFormatters: inputFormatters,
-    decoration: InputDecoration(
-      hintText: hintText,
-      fillColor: Colors.white,
-      hintStyle: TextStyle(color: ColorConstant.lightGreyColor),
-      filled: true,
-      border: const OutlineInputBorder(),
-      suffixIcon: icon,
-    ),
-    validator: validator,
-  );
-}
-
-Widget texts({required String titleText}) {
-  return Align(
-    alignment: Alignment.centerLeft,
-    child: Text(
-      titleText,
-      style: const TextStyle(color: Colors.white, fontSize: 16),
-    ),
-  );
 }

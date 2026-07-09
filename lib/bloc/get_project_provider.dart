@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:duplicate_building_solution/model/project_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:duplicate_building_solution/utils/functions.dart';
+
 class GetProjectsProvider {
   String partyName;
   bool isRecycleBinScreen;
@@ -12,9 +14,7 @@ class GetProjectsProvider {
     required this.isRecycleBinScreen,
   });
 
-  final CollectionReference projectCollectionReference = FirebaseFirestore
-      .instance
-      .collection('party');
+  final CollectionReference projectCollectionReference = FirebaseRef.partyUserDoc;
 
   final StreamController<List<ProjectModel>> projectController =
       StreamController<List<ProjectModel>>.broadcast();

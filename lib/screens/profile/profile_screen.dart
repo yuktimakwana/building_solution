@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
@@ -10,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../offline/offline_sync_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -28,6 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _logout() async {
     await _auth.signOut();
+    await OfflineSyncService.instance.clearAllLocalData();
     final sp = await SharedPreferences.getInstance();
     await sp.clear();
     if (mounted) {
@@ -58,10 +62,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         File(image.path),
         SettableMetadata(contentType: 'image/jpeg'),
       );
-      
+
       // Wait for completion properly
       final TaskSnapshot taskSnapshot = await uploadTask;
-      
+
       // Get download URL only after successful upload task completion
       final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
 
@@ -79,7 +83,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       debugPrint("Storage Error Detail: $e");
       if (e.toString().contains('object-not-found')) {
-        Fluttertoast.showToast(msg: "Upload failed: Please ensure Firebase Storage is enabled in Console.");
+        Fluttertoast.showToast(
+          msg:
+              "Upload failed: Please ensure Firebase Storage is enabled in Console.",
+        );
       } else {
         Fluttertoast.showToast(msg: "Error uploading image: $e");
       }
@@ -100,7 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final user = _auth.currentUser;
       if (user != null) {
         await user.updateDisplayName(newName);
-        
+
         await FirebaseRef.userProfileDoc.set({
           'displayName': newName,
           'updatedAt': FieldValue.serverTimestamp(),
@@ -140,235 +147,182 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: FirebaseRef.userProfileDoc.snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              !snapshot.hasData) {
             return loadingWidget(context);
           }
 
           final data = snapshot.data?.data() ?? {};
-          final displayName = data['displayName'] ?? user?.displayName ?? email.split('@')[0];
-          final mobile = data['mobile'] ?? 'Not provided';
-          final photoUrl = data['image_url'] ?? data['photoUrl'] ?? user?.photoURL;
+          final displayName =
+              data['displayName'] ?? user?.displayName ?? email.split('@')[0];
+          final mobile = data['mobile'] ?? '';
+          final photoUrl =
+              data['image_url'] ?? data['photoUrl'] ?? user?.photoURL;
 
           if (!_isEditingName) {
             _nameController.text = displayName;
           }
 
-          return _isLoading 
-            ? loadingWidget(context)
-            : SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 30),
-                child: Column(
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: ColorConstant.greenColor,
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(30),
-                          bottomRight: Radius.circular(30),
+          return _isLoading
+              ? loadingWidget(context)
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 30),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        decoration: const BoxDecoration(
+                          color: ColorConstant.greenColor,
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(30),
+                            bottomRight: Radius.circular(30),
+                          ),
+                        ),
+                        padding: const EdgeInsets.only(bottom: 40, top: 10),
+                        child: Column(
+                          children: [
+                            Center(
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 4,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                          blurRadius: 10,
+                                          spreadRadius: 2,
+                                        ),
+                                      ],
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 65,
+                                      backgroundColor: Colors.white.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      backgroundImage:
+                                          photoUrl != null &&
+                                              photoUrl.isNotEmpty
+                                          ? NetworkImage(photoUrl)
+                                          : null,
+                                      child:
+                                          (photoUrl == null || photoUrl.isEmpty)
+                                          ? Text(
+                                              displayName.isNotEmpty
+                                                  ? displayName[0].toUpperCase()
+                                                  : 'U',
+                                              style: const TextStyle(
+                                                fontSize: 50,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 5,
+                                    right: 5,
+                                    child: GestureDetector(
+                                      onTap: _pickAndUploadImage,
+                                      child: const CircleAvatar(
+                                        backgroundColor: Colors.white,
+                                        radius: 20,
+                                        child: Icon(
+                                          Icons.camera_alt,
+                                          size: 20,
+                                          color: ColorConstant.greenColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      padding: const EdgeInsets.only(bottom: 40, top: 10),
-                      child: Column(
-                        children: [
-                          Center(
-                            child: Stack(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 4),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.2),
-                                        blurRadius: 10,
-                                        spreadRadius: 2,
-                                      ),
-                                    ],
+                      const SizedBox(height: 30),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          children: [
+                            _isEditingName
+                                ? _buildEditTile(
+                                    icon: Icons.person_outline,
+                                    controller: _nameController,
+                                    label: "Full Name",
+                                    isSaving: _isSavingName,
+                                    onSave: _saveName,
+                                    onCancel: () =>
+                                        setState(() => _isEditingName = false),
+                                  )
+                                : _buildProfileTile(
+                                    icon: Icons.person_outline,
+                                    title: 'Full Name',
+                                    subtitle: displayName,
+                                    onEdit: () =>
+                                        setState(() => _isEditingName = true),
                                   ),
-                                  child: CircleAvatar(
-                                    radius: 65,
-                                    backgroundColor: Colors.white.withValues(alpha: 0.2),
-                                    backgroundImage: photoUrl != null && photoUrl.isNotEmpty 
-                                        ? NetworkImage(photoUrl) 
-                                        : null,
-                                    child: (photoUrl == null || photoUrl.isEmpty)
-                                        ? Text(
-                                            displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
-                                            style: const TextStyle(
-                                              fontSize: 50,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          )
-                                        : null,
-                                  ),
-                                ),
-                                Positioned(
-                                  bottom: 5,
-                                  right: 5,
-                                  child: GestureDetector(
-                                    onTap: _pickAndUploadImage,
-                                    child: const CircleAvatar(
-                                      backgroundColor: Colors.white,
-                                      radius: 20,
-                                      child: Icon(Icons.camera_alt, size: 20, color: ColorConstant.greenColor),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            const SizedBox(height: 16),
+                            _buildProfileTile(
+                              icon: Icons.email_outlined,
+                              title: 'Email Address',
+                              subtitle: email,
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 30),
-                            child: _isEditingName 
-                              ? Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Expanded(
-                                      child: TextField(
-                                        controller: _nameController,
-                                        autofocus: true,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        decoration: const InputDecoration(
-                                          enabledBorder: UnderlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.white),
-                                          ),
-                                          focusedBorder: UnderlineInputBorder(
-                                            borderSide: BorderSide(color: Colors.white, width: 2),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    if (_isSavingName)
-                                      const Padding(
-                                        padding: EdgeInsets.symmetric(horizontal: 10),
-                                        child: SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      )
-                                    else ...[
-                                      IconButton(
-                                        icon: const Icon(Icons.check, color: Colors.white, size: 28),
-                                        onPressed: _saveName,
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.close, color: Colors.white, size: 24),
-                                        onPressed: () => setState(() => _isEditingName = false),
-                                      ),
-                                    ],
-                                  ],
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const SizedBox(width: 40), // spacer for balance
-                                    Expanded(
-                                      child: Text(
-                                        displayName,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontSize: 26,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.edit, color: Colors.white, size: 20),
-                                      onPressed: () => setState(() => _isEditingName = true),
-                                    ),
-                                  ],
-                                ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            mobile,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        children: [
-                          _isEditingName
-                            ? _buildEditTile(
-                                icon: Icons.person_outline,
-                                controller: _nameController,
-                                label: "Full Name",
-                                isSaving: _isSavingName,
-                                onSave: _saveName,
-                                onCancel: () => setState(() => _isEditingName = false),
-                              )
-                            : _buildProfileTile(
-                                icon: Icons.person_outline,
-                                title: 'Full Name',
-                                subtitle: displayName,
-                                onEdit: () => setState(() => _isEditingName = true),
-                              ),
-                          const SizedBox(height: 16),
-                          _buildProfileTile(
-                            icon: Icons.email_outlined,
-                            title: 'Email Address',
-                            subtitle: email,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildProfileTile(
-                            icon: Icons.phone_android_outlined,
-                            title: 'Mobile Number',
-                            subtitle: mobile,
-                          ),
-                          const SizedBox(height: 40),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _logout,
-                              icon: const Icon(Icons.logout, color: Colors.white),
-                              label: const Text(
-                                'LOGOUT',
-                                style: TextStyle(
+                            const SizedBox(height: 16),
+                            mobile.isNotEmpty
+                                ? _buildProfileTile(
+                                    icon: Icons.phone_android_outlined,
+                                    title: 'Mobile Number',
+                                    subtitle: mobile,
+                                  )
+                                : const SizedBox(),
+                            SizedBox(height: mobile.isNotEmpty ? 40 : 10),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: _logout,
+                                icon: const Icon(
+                                  Icons.logout,
                                   color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.2,
                                 ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: ColorConstant.pastelRedColor,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                elevation: 4,
-                                shadowColor: ColorConstant.pastelRedColor.withValues(alpha: 0.4),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                label: const Text(
+                                  'LOGOUT',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: ColorConstant.pastelRedColor,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  elevation: 4,
+                                  shadowColor: ColorConstant.pastelRedColor
+                                      .withValues(alpha: 0.4),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-        }
+                    ],
+                  ),
+                );
+        },
       ),
     );
   }
@@ -487,7 +441,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2, color: ColorConstant.greenColor),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: ColorConstant.greenColor,
+              ),
             )
           else
             IconButton(

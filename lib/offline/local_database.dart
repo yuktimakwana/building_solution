@@ -47,6 +47,16 @@ class LocalDatabase {
     _initialized = true;
   }
 
+  Future<void> clearAllData() async {
+    if (_db == null) return;
+    await _db!.delete('cache_entities');
+    await _db!.delete('pending_operations');
+    for (final controller in _tableControllers.values) {
+      controller.add([]);
+    }
+    _latestCache.clear();
+  }
+
   Future<Map<String, dynamic>?> getEntity(String table, String id) async {
     final rows = await _db!.query(
       'cache_entities',

@@ -19,7 +19,7 @@ import 'bloc/get_party_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await FirebaseRef.init();
+  FirebaseRef.init();
   await OfflineSyncService.instance.initialize();
 
   await LocalDatabase.instance.initialize();

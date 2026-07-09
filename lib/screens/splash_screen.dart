@@ -8,7 +8,6 @@ import 'package:duplicate_building_solution/utils/text_constant.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -24,20 +23,14 @@ class _SplashScreenState extends State<SplashScreen> {
       getUser();
     });
 
-    clearSharedPreference();
     super.initState();
-  }
-
-  Future<void> clearSharedPreference() async {
-    final SharedPreferences sp = await SharedPreferences.getInstance();
-    sp.clear();
   }
 
   Future<void> getUser() async {
     String uid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     if (uid.isNotEmpty) {
-      await FirebaseRef.init();
+      FirebaseRef.init();
 
       if (!mounted) return;
       pageTransition(context, PartyScreen());

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:duplicate_building_solution/model/file_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:duplicate_building_solution/utils/functions.dart';
 import 'package:duplicate_building_solution/utils/text_constant.dart';
 
 class GetFileProvider {
@@ -13,8 +14,7 @@ class GetFileProvider {
     required this.isRecycleBinScreen,
   });
 
-  final CollectionReference fileCollectionReference = FirebaseFirestore.instance
-      .collection(TextConstant.partyCollection);
+  final CollectionReference fileCollectionReference = FirebaseRef.partyUserDoc;
 
   final StreamController<List<FileModel>> fileController =
       StreamController<List<FileModel>>.broadcast();

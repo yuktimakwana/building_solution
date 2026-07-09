@@ -320,6 +320,10 @@ class OfflineSyncService {
     return _localDb.deleteEntitiesByPrefix(table: table, prefix: prefix);
   }
 
+  Future<void> clearAllLocalData() async {
+    await _localDb.clearAllData();
+  }
+
   Future<void> removePendingOperations({
     required String entityType,
     required bool Function(Map<String, dynamic> payload) matcher,
