@@ -18,6 +18,7 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
     on<RecordsAddRowPressed>(_onAddRowAfter);
     on<RecordsResetPressed>(_onReset);
     on<RecordsNextPressed>(_onNext);
+    on<RecordsDeletePressed>(_onDelete);
     on<RecordsStreamError>(_onStreamError);
     on<RecordsNoteChanged>((e, emit) => _recompute(emit, note: e.v));
     on<RecordsFeetChanged>((e, emit) => _recompute(emit, feet: e.v));
@@ -199,6 +200,16 @@ class RecordsBloc extends Bloc<RecordsEvent, RecordsState> {
         selectedIndex: null,
         clearSelection: true, // 👈 important
       );
+    } catch (err) {
+      emit(state.copyWith(loading: false, error: err.toString()));
+    }
+  }
+
+  Future<void> _onDelete(RecordsDeletePressed e, Emitter<RecordsState> emit) async {
+    emit(state.copyWith(loading: true, error: null));
+    try {
+      await repo.deleteRecord(e.docId);
+      emit(state.copyWith(loading: false));
     } catch (err) {
       emit(state.copyWith(loading: false, error: err.toString()));
     }

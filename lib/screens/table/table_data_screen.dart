@@ -1,4 +1,5 @@
 import 'package:duplicate_building_solution/bloc/add_table_data/record_bloc.dart';
+import 'package:duplicate_building_solution/dialog/delete_dialog.dart';
 import 'package:duplicate_building_solution/offline/connectivity_notifier.dart';
 import 'package:duplicate_building_solution/screens/table/component/green_btn.dart';
 import 'package:duplicate_building_solution/screens/table/component/grey_bar_btn.dart';
@@ -146,7 +147,7 @@ class _TableDataScreenState extends State<TableDataScreen> {
                     child: Center(
                       child: TextButton(
                         onPressed: () {
-                          pageTransition(
+                          pageBTTransition(
                             context,
                             ViewRecordsScreen(
                               projectName: widget.projectName,
@@ -184,6 +185,19 @@ class _TableDataScreenState extends State<TableDataScreen> {
                       onTapRow: (i) => context.read<RecordsBloc>().add(
                         RecordsRowSelected(i),
                       ),
+                      onDeleteRow: (docId) {
+                        deleteDialog(
+                          context: context,
+                          title: "Are you sure you want to delete this record?",
+                          deleteButtonText: "Delete",
+                          onPressed: () {
+                            Navigator.pop(context);
+                            context.read<RecordsBloc>().add(
+                              RecordsDeletePressed(docId),
+                            );
+                          },
+                        );
+                      },
                     )
                   else
                     const SizedBox.shrink(),

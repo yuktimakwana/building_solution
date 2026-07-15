@@ -1,4 +1,5 @@
 import 'package:duplicate_building_solution/utils/style_constant.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -34,7 +35,10 @@ ThemeData lightTheme = ThemeData(
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0))),
           backgroundColor: WidgetStateProperty.all<Color>(
               ColorConstant.naturalWhiteColor))),
-
-
-
+  pageTransitionsTheme: const PageTransitionsTheme(
+    builders: {
+      TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+      TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+    },
+  ),
 );

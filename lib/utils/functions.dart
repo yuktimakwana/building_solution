@@ -19,14 +19,36 @@ void pageTransition(BuildContext context, Widget child) {
   Navigator.push(
     context,
     PageTransition(
-      type: PageTransitionType.theme,
-      duration: const Duration(milliseconds: 200),
-      alignment: Alignment.centerLeft,
+      type: PageTransitionType.rightToLeftWithFade,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+      child: child,
+    ),
+  );
+}
+void pageBTTransition(BuildContext context, Widget child) {
+  Navigator.push(
+    context,
+    PageTransition(
+      type: PageTransitionType.bottomToTop,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
       child: child,
     ),
   );
 }
 
+void pageFadeTransition(BuildContext context, Widget child) {
+  Navigator.push(
+    context,
+    PageTransition(
+      type: PageTransitionType.fade,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+      child: child,
+    ),
+  );
+}
 class FirebaseRef {
   static const String collectionName = 'party';
   static late String uid;
@@ -125,6 +147,7 @@ Widget textForms({
   String? Function(String?)? validator,
   required String hintText,
   List<TextInputFormatter>? inputFormatters,
+  Widget? prefix,
 }) {
   return TextFormField(
     controller: textEditingController,
@@ -139,6 +162,7 @@ Widget textForms({
       filled: true,
       border: const OutlineInputBorder(),
       suffixIcon: icon,
+      prefixIcon: prefix,
     ),
     validator: validator,
   );

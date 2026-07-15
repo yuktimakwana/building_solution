@@ -10,6 +10,7 @@ import 'package:duplicate_building_solution/screens/party/party_floating_btn.dar
 import 'package:duplicate_building_solution/screens/party/party_recycle_bin.dart';
 import 'package:duplicate_building_solution/screens/profile/profile_screen.dart';
 import 'package:duplicate_building_solution/screens/project/project_screen.dart';
+import 'package:duplicate_building_solution/utils/animation_utils.dart';
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
 import 'package:duplicate_building_solution/utils/image_constant.dart';
@@ -190,7 +191,7 @@ class _PartyScreenState extends State<PartyScreen> {
 
                     return GestureDetector(
                       onTap: () {
-                        pageTransition(context, const ProfileScreen());
+                        pageBTTransition(context, const ProfileScreen());
                       },
                       child: Padding(
                         padding: const EdgeInsets.only(right: 15),
@@ -275,61 +276,64 @@ class _PartyScreenState extends State<PartyScreen> {
                                 syncStatus == SyncStatus.pending ||
                                 syncStatus == SyncStatus.syncing;
 
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12.0,
-                                vertical: 4.0,
-                              ),
-                              child: Card(
-                                color: ColorConstant.naturalWhiteColor,
-                                elevation: 4,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                            return AnimationUtils.animatedListItem(
+                              index: index,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12.0,
+                                  vertical: 4.0,
                                 ),
-                                child: ListTile(
-                                  horizontalTitleGap: 6,
-                                  onTap: () {
-                                    pageTransition(
-                                      context,
-                                      ProjectScreen(partyName: partyName),
-                                    );
-                                  },
-                                  leading: DefaultImage(
-                                    title: ImageConstant.partyImage,
+                                child: Card(
+                                  color: ColorConstant.naturalWhiteColor,
+                                  elevation: 4,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  title: Text(partyName),
-                                  subtitle: isPending
-                                      ? Text(
-                                          'Pending sync',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodySmall
-                                              ?.copyWith(
-                                                color: ColorConstant
-                                                    .pastelRedColor,
-                                              ),
-                                        )
-                                      : null,
-                                  trailing: IconButton(
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      color: ColorConstant.pastelRedColor,
-                                    ),
-                                    onPressed: () async {
-                                      deleteDialog(
-                                        deleteButtonText:
-                                            TextConstant.moveToRecycleBin,
-                                        onPressed: () async {
-                                          Navigator.pop(context);
-                                          await _syncService.markPartyDeleted(
-                                            partyName: partyName,
-                                            deleted: true,
-                                          );
-                                        },
-                                        title: TextConstant.movePartyRecycle,
-                                        context: context,
+                                  child: ListTile(
+                                    horizontalTitleGap: 6,
+                                    onTap: () {
+                                      pageTransition(
+                                        context,
+                                        ProjectScreen(partyName: partyName),
                                       );
                                     },
+                                    leading: DefaultImage(
+                                      title: ImageConstant.partyImage,
+                                    ),
+                                    title: Text(partyName),
+                                    subtitle: isPending
+                                        ? Text(
+                                            'Pending sync',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: ColorConstant
+                                                      .pastelRedColor,
+                                                ),
+                                          )
+                                        : null,
+                                    trailing: IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: ColorConstant.pastelRedColor,
+                                      ),
+                                      onPressed: () async {
+                                        deleteDialog(
+                                          deleteButtonText:
+                                              TextConstant.moveToRecycleBin,
+                                          onPressed: () async {
+                                            Navigator.pop(context);
+                                            await _syncService.markPartyDeleted(
+                                              partyName: partyName,
+                                              deleted: true,
+                                            );
+                                          },
+                                          title: TextConstant.movePartyRecycle,
+                                          context: context,
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ),

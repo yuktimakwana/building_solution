@@ -23,6 +23,11 @@ class RecordsResetPressed extends RecordsEvent {}
 
 class RecordsNextPressed extends RecordsEvent {}
 
+class RecordsDeletePressed extends RecordsEvent {
+  final String docId;
+  RecordsDeletePressed(this.docId);
+}
+
 class RecordsNoteChanged extends RecordsEvent {
   final String v;
   RecordsNoteChanged(this.v);

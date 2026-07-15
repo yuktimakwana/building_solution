@@ -262,6 +262,40 @@ class OfflineSyncService {
     );
   }
 
+  Future<void> deleteRecord({
+    required String partyName,
+    required String projectName,
+    required String fileName,
+    required String docId,
+  }) async {
+    final id = '$partyName::$projectName::$fileName::$docId';
+    await _localDb.deleteEntity(table: 'records', id: id);
+
+    await _runDeleteOrQueue(
+      entityType: 'record',
+      payload: {
+        'partyName': partyName,
+        'projectName': projectName,
+        'fileName': fileName,
+        'docId': docId,
+      },
+      deleteAction: () async {
+        final ref = FirebaseRef.partyUserDoc
+            .doc(partyName)
+            .collection(TextConstant.projectCollection)
+            .doc(projectName)
+            .collection(TextConstant.fileCollection)
+            .doc(fileName)
+            .collection(TextConstant.recordsCollection)
+            .doc(docId);
+        final doc = await ref.get();
+        if (doc.exists) {
+          await ref.delete();
+        }
+      },
+    );
+  }
+
   Future<void> cacheSnapshotBatch({
     required String table,
     required QuerySnapshot<Map<String, dynamic>> snapshot,

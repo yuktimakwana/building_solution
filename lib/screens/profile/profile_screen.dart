@@ -155,7 +155,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final data = snapshot.data?.data() ?? {};
           final displayName =
               data['displayName'] ?? user?.displayName ?? email.split('@')[0];
-          final mobile = data['mobile'] ?? '';
+          final mobile = data['mobile']?.toString() ?? '';
           final photoUrl =
               data['image_url'] ?? data['photoUrl'] ?? user?.photoURL;
 

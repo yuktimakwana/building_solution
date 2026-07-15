@@ -1,3 +1,4 @@
+import 'package:duplicate_building_solution/utils/animation_utils.dart';
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/style_constant.dart';
 import 'package:duplicate_building_solution/utils/text_constant.dart';
@@ -10,49 +11,46 @@ void deleteDialog({
   required String deleteButtonText,
   required Function() onPressed,
 }) {
-  showDialog(
-    barrierDismissible: true,
+  AnimationUtils.showAnimatedDialog(
     context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        actionsAlignment: MainAxisAlignment.center,
-        backgroundColor: ColorConstant.naturalWhiteColor,
-        surfaceTintColor: Colors.transparent,
-        contentPadding: const EdgeInsets.all(10),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Lottie.asset("assets/anim/delete_anim.json", height: 50, width: 50),
-            Text(
-              title,
-              style: StyleConstant.mediumTextStyle,
-              textAlign: TextAlign.center,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    FocusScope.of(context).unfocus();
-                  },
-                  child: Text(
-                    TextConstant.cancel,
-                    style: StyleConstant.smallBoldTextStyle,
-                  ),
+    child: AlertDialog(
+      actionsAlignment: MainAxisAlignment.center,
+      backgroundColor: ColorConstant.naturalWhiteColor,
+      surfaceTintColor: Colors.transparent,
+      contentPadding: const EdgeInsets.all(10),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Lottie.asset("assets/anim/delete_anim.json", height: 50, width: 50),
+          Text(
+            title,
+            style: StyleConstant.mediumTextStyle,
+            textAlign: TextAlign.center,
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  FocusScope.of(context).unfocus();
+                },
+                child: Text(
+                  TextConstant.cancel,
+                  style: StyleConstant.smallBoldTextStyle,
                 ),
-                TextButton(
-                  onPressed: onPressed,
-                  child: Text(
-                    deleteButtonText,
-                    style: StyleConstant.pastelRedTextStyle,
-                  ),
+              ),
+              TextButton(
+                onPressed: onPressed,
+                child: Text(
+                  deleteButtonText,
+                  style: StyleConstant.pastelRedTextStyle,
                 ),
-              ],
-            ),
-          ],
-        ),
-      );
-    },
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
   );
 }

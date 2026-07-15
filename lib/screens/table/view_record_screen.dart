@@ -127,6 +127,7 @@ class AllTableDataScreenState extends State<AllTableDataScreen> {
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:duplicate_building_solution/excel_file_exporter.dart';
 import 'package:duplicate_building_solution/model/record_model.dart';
+import 'package:duplicate_building_solution/utils/animation_utils.dart';
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
 import 'package:duplicate_building_solution/widgets/app_bar_widget.dart';
@@ -265,17 +266,19 @@ class _RecordsTable extends StatelessWidget {
             )
                 .toList(),
           ),
-          ...records.map((r) {
+          ...records.asMap().entries.map((entry) {
+            final index = entry.key;
+            final r = entry.value;
             return TableRow(
               decoration: const BoxDecoration(color: Colors.white),
               children: [
-                _cell('${r.idColumn}'),
-                _cell(r.note),
-                _cell(r.feet),
-                _cell(r.inch),
-                _cell(r.rft),
-                _cell(r.qty.toString()),
-                _cell(r.total),
+                _cell('${r.idColumn}', index),
+                _cell(r.note, index),
+                _cell(r.feet, index),
+                _cell(r.inch, index),
+                _cell(r.rft, index),
+                _cell(r.qty.toString(), index),
+                _cell(r.total, index),
               ],
             );
           }),
@@ -284,15 +287,18 @@ class _RecordsTable extends StatelessWidget {
     );
   }
 
-  Widget _cell(String text) =>
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2,vertical: 8),
-        child: Text(
-          text,
-          style: const TextStyle(fontSize: 14),
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          maxLines: 3,
+  Widget _cell(String text, int index) =>
+      AnimationUtils.animatedListItem(
+        index: index,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 14),
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            maxLines: 3,
+          ),
         ),
       );
 }

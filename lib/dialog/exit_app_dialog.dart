@@ -1,11 +1,12 @@
+import 'package:duplicate_building_solution/utils/animation_utils.dart';
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 void showExitDialog(BuildContext context) {
-  showDialog(
+  AnimationUtils.showAnimatedDialog(
     context: context,
-    builder: (context) => AlertDialog(
+    child: AlertDialog(
       title: const Text('Confirm Exit'),
       content: const Text('Do you really want to go back?'),
       actions: [

@@ -8,6 +8,7 @@ import 'package:duplicate_building_solution/offline/offline_sync_service.dart';
 import 'package:duplicate_building_solution/screens/file/file_floating_btn.dart';
 import 'package:duplicate_building_solution/screens/file/file_recycle_bin.dart';
 import 'package:duplicate_building_solution/screens/table/record_screen.dart';
+import 'package:duplicate_building_solution/utils/animation_utils.dart';
 import 'package:duplicate_building_solution/utils/color_constant.dart';
 import 'package:duplicate_building_solution/utils/functions.dart';
 import 'package:duplicate_building_solution/utils/image_constant.dart';
@@ -238,68 +239,71 @@ class _FileScreenState extends State<FileScreen> {
                                 syncStatus == SyncStatus.pending ||
                                 syncStatus == SyncStatus.syncing;
 
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12.0,
-                                vertical: 4.0,
-                              ),
-                              child: Card(
-                                color: ColorConstant.naturalWhiteColor,
-                                elevation: 4,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                            return AnimationUtils.animatedListItem(
+                              index: index,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12.0,
+                                  vertical: 4.0,
                                 ),
-                                child: ListTile(
-                                  horizontalTitleGap: 8,
-                                  onTap: () {
-                                    pageTransition(
-                                      context,
-                                      RecordsScreen(
-                                        fileName: fileName,
-                                        projectName: widget.projectName,
-                                        partyName: widget.partyName,
-                                      ),
-                                    );
-                                  },
-                                  leading: DefaultImage(
-                                    title: ImageConstant.fileImage,
+                                child: Card(
+                                  color: ColorConstant.naturalWhiteColor,
+                                  elevation: 4,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  title: Text(fileName),
-                                  subtitle: isPending
-                                      ? Text(
-                                          'Pending sync',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodySmall
-                                              ?.copyWith(
-                                                color: ColorConstant
-                                                    .pastelRedColor,
-                                              ),
-                                        )
-                                      : null,
-                                  trailing: IconButton(
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      color: ColorConstant.pastelRedColor,
-                                    ),
-                                    onPressed: () async {
-                                      deleteDialog(
-                                        deleteButtonText:
-                                            TextConstant.moveToRecycleBin,
-                                        onPressed: () async {
-                                          Navigator.pop(context);
-
-                                          await _syncService.markFileDeleted(
-                                            partyName: widget.partyName,
-                                            projectName: widget.projectName,
-                                            fileName: fileName,
-                                            deleted: true,
-                                          );
-                                        },
-                                        title: TextConstant.moveFileRecycle,
-                                        context: context,
+                                  child: ListTile(
+                                    horizontalTitleGap: 8,
+                                    onTap: () {
+                                      pageFadeTransition(
+                                        context,
+                                        RecordsScreen(
+                                          fileName: fileName,
+                                          projectName: widget.projectName,
+                                          partyName: widget.partyName,
+                                        ),
                                       );
                                     },
+                                    leading: DefaultImage(
+                                      title: ImageConstant.fileImage,
+                                    ),
+                                    title: Text(fileName),
+                                    subtitle: isPending
+                                        ? Text(
+                                            'Pending sync',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: ColorConstant
+                                                      .pastelRedColor,
+                                                ),
+                                          )
+                                        : null,
+                                    trailing: IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: ColorConstant.pastelRedColor,
+                                      ),
+                                      onPressed: () async {
+                                        deleteDialog(
+                                          deleteButtonText:
+                                              TextConstant.moveToRecycleBin,
+                                          onPressed: () async {
+                                            Navigator.pop(context);
+
+                                            await _syncService.markFileDeleted(
+                                              partyName: widget.partyName,
+                                              projectName: widget.projectName,
+                                              fileName: fileName,
+                                              deleted: true,
+                                            );
+                                          },
+                                          title: TextConstant.moveFileRecycle,
+                                          context: context,
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ),

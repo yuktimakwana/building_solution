@@ -60,7 +60,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         // Save profile data to Firestore
         await FirebaseRef.userProfileDoc.set({
           'displayName': _userNameController.text.trim(),
-          'mobile': _mobileController.text.trim(),
+          'mobile': '+91${_mobileController.text.trim()}',
           'email': _emailController.text.trim(),
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
@@ -166,6 +166,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     hintText: TextConstant.mobileNumberHint,
                     textInputAction: TextInputAction.next,
                     keyboardType: TextInputType.phone,
+                    prefix: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                      child: Text(
+                        '+91',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
                     inputFormatters: [
                       FilteringTextInputFormatter.digitsOnly,
                       LengthLimitingTextInputFormatter(10),

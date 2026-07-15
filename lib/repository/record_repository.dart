@@ -53,6 +53,15 @@ class RecordsRepository {
     );
   }
 
+  Future<void> deleteRecord(String docId) async {
+    await _syncService.deleteRecord(
+      partyName: partyName,
+      projectName: projectName,
+      fileName: fileName,
+      docId: docId,
+    );
+  }
+
   void dispose() {
     _onlineSubscription?.cancel();
   }
